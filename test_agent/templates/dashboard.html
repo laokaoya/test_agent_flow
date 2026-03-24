@@ -1,0 +1,1338 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据可视化仪表盘 - AI测试平台</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px 0;
+        }
+        
+        .dashboard-header {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .stats-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        
+        .stats-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-box {
+            text-align: center;
+            padding: 15px;
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .chart-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .badge-pass {
+            background: #28a745;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+        }
+        
+        .badge-fail {
+            background: #dc3545;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+        }
+        
+        .table-hover tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .refresh-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #667eea;
+            color: white;
+            border: none;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+        
+        .refresh-btn:hover {
+            background: #764ba2;
+            transform: rotate(180deg);
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        
+        .empty-data {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        
+        canvas {
+            max-height: 400px;
+        }
+        
+        .collapse-toggle {
+            transition: transform 0.3s ease;
+        }
+        
+        .collapse-toggle[aria-expanded="true"] i {
+            transform: rotate(180deg);
+        }
+        
+        .stats-card h5 {
+            color: #333;
+            font-weight: 600;
+        }
+        
+        .stats-card h6 {
+            color: #555;
+            font-weight: 500;
+        }
+        
+        .btn-outline-primary {
+            border-color: #667eea;
+            color: #667eea;
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: #667eea;
+            border-color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <!-- 顶部导航 -->
+        <div class="dashboard-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2><i class="fas fa-chart-line"></i> 数据可视化仪表盘</h2>
+                    <p class="text-muted mb-0">AI儿童英语陪伴产品测试数据分析</p>
+                </div>
+                <div>
+                    <a href="/annotation" class="btn btn-outline-info me-2">
+                        <i class="fas fa-edit"></i> 标注平台
+                    </a>
+                    <a href="/" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left"></i> 返回测试
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 概览统计卡片 -->
+                <div class="stats-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0"><i class="fas fa-chart-bar"></i> 总体概览</h5>
+                <button class="btn btn-sm btn-outline-primary collapse-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#overviewStats" aria-expanded="true">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+            </div>
+            <div class="collapse show" id="overviewStats">
+                <div class="row">
+                    <div class="col-md-2 col-sm-6">
+                    <div class="stat-box">
+                        <i class="fas fa-flask fa-2x text-primary"></i>
+                        <div class="stat-value text-primary" id="total-tests">-</div>
+                        <div class="stat-label">累计测试</div>
+                    </div>
+                </div>
+                    <div class="col-md-2 col-sm-6">
+                    <div class="stat-box">
+                        <i class="fas fa-calendar-day fa-2x text-success"></i>
+                        <div class="stat-value text-success" id="today-tests">-</div>
+                        <div class="stat-label">今日测试</div>
+                    </div>
+                </div>
+                    <div class="col-md-2 col-sm-6">
+                    <div class="stat-box">
+                        <i class="fas fa-chart-pie fa-2x text-warning"></i>
+                        <div class="stat-value text-warning" id="pass-rate">-</div>
+                        <div class="stat-label">通过率</div>
+                    </div>
+                </div>
+                    <div class="col-md-2 col-sm-6">
+                    <div class="stat-box">
+                        <i class="fas fa-star fa-2x text-danger"></i>
+                        <div class="stat-value text-danger" id="avg-score">-</div>
+                        <div class="stat-label">平均评分</div>
+                        </div>
+                    </div>
+                    <div class="col-md-2 col-sm-6">
+                        <div class="stat-box">
+                            <i class="fas fa-heart fa-2x text-info"></i>
+                            <div class="stat-value text-info" id="avg-experience-score">-</div>
+                            <div class="stat-label">体验评分</div>
+                        </div>
+                    </div>
+                    <div class="col-md-2 col-sm-6">
+                        <div class="stat-box">
+                            <i class="fas fa-tags fa-2x text-secondary"></i>
+                            <div class="stat-value text-secondary" id="total-annotations">-</div>
+                            <div class="stat-label">标注数量</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 测试类型详细统计 -->
+        <div class="stats-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0"><i class="fas fa-layer-group"></i> 测试类型详细统计</h5>
+                <button class="btn btn-sm btn-outline-primary collapse-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#testTypeStats" aria-expanded="false">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+            </div>
+            <div class="collapse" id="testTypeStats">
+                <!-- 正常测试统计 -->
+                <div class="mb-4">
+                    <h6 class="text-primary mb-3"><i class="fas fa-clipboard-check"></i> 正常测试统计</h6>
+                    <div class="row">
+                        <div class="col-md-2 col-sm-6">
+                            <div class="stat-box">
+                                <i class="fas fa-flask fa-2x text-primary"></i>
+                                <div class="stat-value text-primary" id="total-normal-tests">-</div>
+                                <div class="stat-label">正常测试</div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-6">
+                            <div class="stat-box">
+                                <i class="fas fa-calendar-day fa-2x text-success"></i>
+                                <div class="stat-value text-success" id="today-normal-tests">-</div>
+                                <div class="stat-label">今日正常</div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-6">
+                            <div class="stat-box">
+                                <i class="fas fa-chart-pie fa-2x text-warning"></i>
+                                <div class="stat-value text-warning" id="normal-pass-rate">-</div>
+                                <div class="stat-label">正常通过率</div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-6">
+                            <div class="stat-box">
+                                <i class="fas fa-star fa-2x text-danger"></i>
+                                <div class="stat-value text-danger" id="avg-normal-score">-</div>
+                                <div class="stat-label">正常评分</div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-6">
+                            <div class="stat-box">
+                                <i class="fas fa-heart fa-2x text-info"></i>
+                                <div class="stat-value text-info" id="avg-normal-experience-score">-</div>
+                                <div class="stat-label">正常体验</div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-6">
+                            <div class="stat-box">
+                                <i class="fas fa-tags fa-2x text-secondary"></i>
+                                <div class="stat-value text-secondary" id="normal-annotations">-</div>
+                                <div class="stat-label">正常标注</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 连续测试统计 -->
+                <div class="mb-4">
+                    <h6 class="text-info mb-3"><i class="fas fa-sync-alt"></i> 连续测试统计</h6>
+                    <div class="row">
+                        <div class="col-md-2 col-sm-6">
+                            <div class="stat-box">
+                                <i class="fas fa-flask fa-2x text-primary"></i>
+                                <div class="stat-value text-primary" id="total-continuous-tests">-</div>
+                                <div class="stat-label">连续测试</div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-6">
+                            <div class="stat-box">
+                                <i class="fas fa-calendar-day fa-2x text-success"></i>
+                                <div class="stat-value text-success" id="today-continuous-tests">-</div>
+                                <div class="stat-label">今日连续</div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-6">
+                            <div class="stat-box">
+                                <i class="fas fa-chart-pie fa-2x text-warning"></i>
+                                <div class="stat-value text-warning" id="continuous-pass-rate">-</div>
+                                <div class="stat-label">连续通过率</div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-6">
+                            <div class="stat-box">
+                                <i class="fas fa-star fa-2x text-danger"></i>
+                                <div class="stat-value text-danger" id="avg-continuous-score">-</div>
+                                <div class="stat-label">连续评分</div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-6">
+                            <div class="stat-box">
+                                <i class="fas fa-heart fa-2x text-info"></i>
+                                <div class="stat-value text-info" id="avg-continuous-experience-score">-</div>
+                                <div class="stat-label">连续体验</div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-6">
+                            <div class="stat-box">
+                                <i class="fas fa-tags fa-2x text-secondary"></i>
+                                <div class="stat-value text-secondary" id="continuous-annotations">-</div>
+                                <div class="stat-label">连续标注</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 记忆测试统计 -->
+                <div>
+                    <h6 class="text-warning mb-3"><i class="fas fa-brain"></i> 记忆测试统计</h6>
+                    <div class="row">
+                        <div class="col-md-2 col-sm-6">
+                            <div class="stat-box">
+                                <i class="fas fa-flask fa-2x text-primary"></i>
+                                <div class="stat-value text-primary" id="total-memory-tests">-</div>
+                                <div class="stat-label">记忆测试</div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-6">
+                            <div class="stat-box">
+                                <i class="fas fa-calendar-day fa-2x text-success"></i>
+                                <div class="stat-value text-success" id="today-memory-tests">-</div>
+                                <div class="stat-label">今日记忆</div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-6">
+                            <div class="stat-box">
+                                <i class="fas fa-chart-pie fa-2x text-warning"></i>
+                                <div class="stat-value text-warning" id="memory-pass-rate">-</div>
+                                <div class="stat-label">记忆通过率</div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-6">
+                            <div class="stat-box">
+                                <i class="fas fa-star fa-2x text-danger"></i>
+                                <div class="stat-value text-danger" id="avg-memory-score">-</div>
+                                <div class="stat-label">记忆评分</div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-6">
+                            <div class="stat-box">
+                                <i class="fas fa-heart fa-2x text-info"></i>
+                                <div class="stat-value text-info" id="avg-memory-experience-score">-</div>
+                                <div class="stat-label">记忆体验</div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-6">
+                            <div class="stat-box">
+                                <i class="fas fa-tags fa-2x text-secondary"></i>
+                                <div class="stat-value text-secondary" id="memory-annotations">-</div>
+                                <div class="stat-label">记忆标注</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- 核心图表区域 -->
+        <div class="stats-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0"><i class="fas fa-chart-line"></i> 核心图表分析</h5>
+                <button class="btn btn-sm btn-outline-primary collapse-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#coreCharts" aria-expanded="true">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+            </div>
+            <div class="collapse show" id="coreCharts">
+        <div class="row">
+            <!-- 角色表现对比 -->
+            <div class="col-lg-6">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-user-friends"></i> 各角色表现对比
+                    </div>
+                    <canvas id="roleChart"></canvas>
+                </div>
+            </div>
+
+            <!-- 评分指标雷达图 -->
+            <div class="col-lg-6">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-chart-radar"></i> 评分指标雷达图
+                    </div>
+                    <canvas id="criteriaRadarChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- 趋势分析 -->
+            <div class="col-lg-12">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-chart-area"></i> 评分趋势分析
+                    </div>
+                    <canvas id="trendChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 记忆测试专用分析区域 -->
+        <div class="stats-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0"><i class="fas fa-brain"></i> 记忆测试专用分析</h5>
+                <button class="btn btn-sm btn-outline-primary collapse-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#memoryAnalysis" aria-expanded="false">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+            </div>
+            <div class="collapse" id="memoryAnalysis">
+        <div class="row">
+                    <!-- 记忆能力雷达图 -->
+            <div class="col-lg-6">
+                <div class="chart-container">
+                    <div class="chart-title">
+                                <i class="fas fa-chart-radar"></i> 记忆能力雷达图
+                    </div>
+                            <canvas id="memoryRadarChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- 记忆测试角色对比 -->
+                    <div class="col-lg-6">
+                        <div class="chart-container">
+                            <div class="chart-title">
+                                <i class="fas fa-user-friends"></i> 记忆测试角色对比
+                            </div>
+                            <canvas id="memoryRoleChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- 记忆测试趋势 -->
+                    <div class="col-lg-12">
+                        <div class="chart-container">
+                            <div class="chart-title">
+                                <i class="fas fa-chart-area"></i> 记忆测试趋势分析
+                            </div>
+                            <canvas id="memoryTrendChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 记忆测试详细统计表格 -->
+                <div class="mt-4">
+                    <h6 class="mb-3"><i class="fas fa-table"></i> 记忆测试详细统计</h6>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>记忆维度</th>
+                                    <th>平均分数</th>
+                                    <th>测试次数</th>
+                                    <th>最高分</th>
+                                    <th>最低分</th>
+                                    <th>标准差</th>
+                                </tr>
+                            </thead>
+                            <tbody id="memoryStatsTable">
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted">暂无数据</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 详细分析区域 -->
+        <div class="stats-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0"><i class="fas fa-microscope"></i> 详细分析</h5>
+                <button class="btn btn-sm btn-outline-primary collapse-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#detailedAnalysis" aria-expanded="false">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+            </div>
+            <div class="collapse" id="detailedAnalysis">
+                <div class="row">
+                    <!-- 标注质量分析 -->
+                    <div class="col-lg-6">
+                        <div class="chart-container">
+                            <div class="chart-title">
+                                <i class="fas fa-edit"></i> 标注质量分析
+                            </div>
+                            <canvas id="annotationQualityChart"></canvas>
+                </div>
+            </div>
+
+            <!-- 最近测试记录 -->
+            <div class="col-lg-6">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-history"></i> 最近测试记录
+                    </div>
+                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                        <table class="table table-hover">
+                            <thead class="table-light sticky-top">
+                                <tr>
+                                    <th>时间</th>
+                                    <th>角色</th>
+                                            <th>专家评分</th>
+                                            <th>孩子评分</th>
+                                    <th>状态</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent-tests-body">
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted">加载中...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- 指标详细统计 -->
+                    <div class="col-lg-12">
+                        <div class="chart-container">
+                            <div class="chart-title">
+                                <i class="fas fa-list"></i> 各指标平均分（专家评分 vs 孩子评分）
+                            </div>
+                            <canvas id="criteriaBarChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 刷新按钮 -->
+        <button class="refresh-btn" onclick="refreshDashboard()" title="刷新数据">
+            <i class="fas fa-sync-alt"></i>
+        </button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 全局图表对象
+        let roleChart, criteriaRadarChart, trendChart, criteriaBarChart, annotationQualityChart;
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDashboard();
+            // 每30秒自动刷新
+            setInterval(refreshDashboard, 30000);
+        });
+
+        // 加载仪表盘数据
+        async function loadDashboard() {
+            try {
+                await Promise.all([
+                    loadSummary(),
+                    loadRoleStats(),
+                    loadCriteriaStats(),
+                    loadTrendData(),
+                    loadRecentTests(),
+                    loadAnnotationQuality(),
+                    loadMemoryStats()
+                ]);
+            } catch (error) {
+                console.error('加载仪表盘失败:', error);
+            }
+        }
+
+        // 加载概览数据
+        async function loadSummary() {
+            try {
+                const response = await fetch('/api/dashboard/summary');
+                const result = await response.json();
+                
+                if (result.success) {
+                    const data = result.data;
+                    
+                    // 总体统计
+                    document.getElementById('total-tests').textContent = data.total_tests;
+                    document.getElementById('today-tests').textContent = data.today_tests;
+                    document.getElementById('pass-rate').textContent = data.total_pass_rate + '%';
+                    document.getElementById('avg-score').textContent = data.avg_score;
+                    document.getElementById('avg-experience-score').textContent = data.avg_experience_score;
+                    document.getElementById('total-annotations').textContent = data.total_annotations || 0;
+                    
+                    // 正常测试统计
+                    document.getElementById('total-normal-tests').textContent = data.total_normal_tests;
+                    document.getElementById('today-normal-tests').textContent = data.today_normal_tests;
+                    document.getElementById('normal-pass-rate').textContent = data.normal_pass_rate + '%';
+                    document.getElementById('avg-normal-score').textContent = data.avg_normal_score;
+                    document.getElementById('avg-normal-experience-score').textContent = data.avg_normal_experience_score;
+                    document.getElementById('normal-annotations').textContent = data.normal_annotations || 0;
+                    
+                    // 连续测试统计
+                    document.getElementById('total-continuous-tests').textContent = data.total_continuous_tests;
+                    document.getElementById('today-continuous-tests').textContent = data.today_continuous_tests;
+                    document.getElementById('continuous-pass-rate').textContent = data.continuous_pass_rate + '%';
+                    document.getElementById('avg-continuous-score').textContent = data.avg_continuous_score;
+                    document.getElementById('avg-continuous-experience-score').textContent = data.avg_continuous_experience_score;
+                    document.getElementById('continuous-annotations').textContent = data.continuous_annotations || 0;
+                    
+                    // 记忆测试统计
+                    document.getElementById('total-memory-tests').textContent = data.total_memory_tests || 0;
+                    document.getElementById('today-memory-tests').textContent = data.today_memory_tests || 0;
+                    document.getElementById('memory-pass-rate').textContent = (data.memory_pass_rate || 0) + '%';
+                    document.getElementById('avg-memory-score').textContent = data.avg_memory_score || 0;
+                    document.getElementById('avg-memory-experience-score').textContent = data.avg_memory_experience_score || 0;
+                    document.getElementById('memory-annotations').textContent = data.memory_annotations || 0;
+                }
+            } catch (error) {
+                console.error('加载概览数据失败:', error);
+            }
+        }
+
+        // 加载角色统计
+        async function loadRoleStats() {
+            try {
+                const response = await fetch('/api/dashboard/role-stats');
+                const result = await response.json();
+                
+                if (result.success && result.data.length > 0) {
+                    const data = result.data;
+                    
+                    // 按测试类型分组数据
+                    const normalData = data.filter(d => d.test_type === 'normal');
+                    const continuousData = data.filter(d => d.test_type === 'continuous');
+                    const allData = data.filter(d => d.test_type === 'all');
+                    
+                    // 获取所有角色类型
+                    const allRoles = [...new Set(data.map(d => d.role_type))];
+                    
+                    // 角色对比柱状图
+                    const ctx = document.getElementById('roleChart');
+                    
+                    if (roleChart) {
+                        roleChart.destroy();
+                    }
+                    
+                    roleChart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: allRoles,
+                            datasets: [
+                                {
+                                    label: '正常测试-平均评分',
+                                    data: allRoles.map(role => {
+                                        const item = normalData.find(d => d.role_type === role);
+                                        return item ? item.avg_score : 0;
+                                    }),
+                                    backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                                    borderColor: 'rgba(102, 126, 234, 1)',
+                                    borderWidth: 2
+                                },
+                                {
+                                    label: '连续测试-平均评分',
+                                    data: allRoles.map(role => {
+                                        const item = continuousData.find(d => d.role_type === role);
+                                        return item ? item.avg_score : 0;
+                                    }),
+                                    backgroundColor: 'rgba(118, 75, 162, 0.8)',
+                                    borderColor: 'rgba(118, 75, 162, 1)',
+                                    borderWidth: 2
+                                },
+                                {
+                                    label: '正常测试-体验评分',
+                                    data: allRoles.map(role => {
+                                        const item = normalData.find(d => d.role_type === role);
+                                        return item ? item.avg_experience : 0;
+                                    }),
+                                    backgroundColor: 'rgba(255, 99, 132, 0.8)',
+                                    borderColor: 'rgba(255, 99, 132, 1)',
+                                    borderWidth: 2
+                                },
+                                {
+                                    label: '连续测试-体验评分',
+                                    data: allRoles.map(role => {
+                                        const item = continuousData.find(d => d.role_type === role);
+                                        return item ? item.avg_experience : 0;
+                                    }),
+                                    backgroundColor: 'rgba(75, 192, 192, 0.8)',
+                                    borderColor: 'rgba(75, 192, 192, 1)',
+                                    borderWidth: 2
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            plugins: {
+                                legend: {
+                                    display: true,
+                                    position: 'top'
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        afterLabel: function(context) {
+                                            const role = allRoles[context.dataIndex];
+                                            const normalItem = normalData.find(d => d.role_type === role);
+                                            const continuousItem = continuousData.find(d => d.role_type === role);
+                                            
+                                            let tooltip = '';
+                                            if (normalItem) {
+                                                tooltip += `正常测试: ${normalItem.count}次, 通过率: ${normalItem.pass_rate}%\n`;
+                                            }
+                                            if (continuousItem) {
+                                                tooltip += `连续测试: ${continuousItem.count}次, 通过率: ${continuousItem.pass_rate}%`;
+                                            }
+                                            return tooltip;
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    max: 10,
+                                    title: {
+                                        display: true,
+                                        text: '评分'
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('加载角色统计失败:', error);
+            }
+        }
+
+        // 加载指标统计
+        async function loadCriteriaStats() {
+            try {
+                const response = await fetch('/api/dashboard/criteria-stats');
+                const result = await response.json();
+                
+                if (result.success && result.data.length > 0) {
+                    const data = result.data;
+                    
+                    // 雷达图
+                    const radarCtx = document.getElementById('criteriaRadarChart');
+                    if (criteriaRadarChart) {
+                        criteriaRadarChart.destroy();
+                    }
+                    
+                    criteriaRadarChart = new Chart(radarCtx, {
+                        type: 'radar',
+                        data: {
+                            labels: data.map(d => d.criteria),
+                            datasets: [{
+                                label: '平均得分',
+                                data: data.map(d => d.avg_score),
+                                backgroundColor: 'rgba(102, 126, 234, 0.2)',
+                                borderColor: 'rgba(102, 126, 234, 1)',
+                                borderWidth: 2,
+                                pointBackgroundColor: 'rgba(102, 126, 234, 1)',
+                                pointBorderColor: '#fff',
+                                pointHoverBackgroundColor: '#fff',
+                                pointHoverBorderColor: 'rgba(102, 126, 234, 1)'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            plugins: {
+                                legend: {
+                                    display: false
+                                }
+                            },
+                            scales: {
+                                r: {
+                                    beginAtZero: true,
+                                    max: 10,
+                                    ticks: {
+                                        stepSize: 2
+                                    }
+                                }
+                            }
+                        }
+                    });
+                    
+                    // 柱状图 - 显示专家评分和孩子评分对比
+                    const barCtx = document.getElementById('criteriaBarChart');
+                    if (criteriaBarChart) {
+                        criteriaBarChart.destroy();
+                    }
+                    
+                    // 取前10个指标
+                    const topData = data.slice(0, 10);
+                    
+                    criteriaBarChart = new Chart(barCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: topData.map(d => d.criteria.length > 20 ? d.criteria.substring(0, 20) + '...' : d.criteria),
+                            datasets: [
+                                {
+                                    label: '专家评分',
+                                    data: topData.map(d => d.expert_score || d.avg_score),
+                                    backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                                    borderColor: 'rgba(102, 126, 234, 1)',
+                                    borderWidth: 1
+                                },
+                                {
+                                    label: '孩子评分',
+                                    data: topData.map(d => d.child_score || d.avg_score),
+                                    backgroundColor: 'rgba(118, 75, 162, 0.8)',
+                                    borderColor: 'rgba(118, 75, 162, 1)',
+                                    borderWidth: 1
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            plugins: {
+                                legend: {
+                                    display: true,
+                                    position: 'top'
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    max: 10,
+                                    title: {
+                                        display: true,
+                                        text: '评分'
+                                    }
+                                },
+                                x: {
+                                    title: {
+                                        display: true,
+                                        text: '评分指标'
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('加载指标统计失败:', error);
+            }
+        }
+
+        // 加载趋势数据
+        async function loadTrendData() {
+            try {
+                const response = await fetch('/api/dashboard/trend');
+                const result = await response.json();
+                
+                if (result.success && result.data.length > 0) {
+                    const data = result.data;
+                    
+                    const ctx = document.getElementById('trendChart');
+                    if (trendChart) {
+                        trendChart.destroy();
+                    }
+                    
+                    trendChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: data.map(d => d.date),
+                            datasets: [
+                                {
+                                    label: '平均评分',
+                                    data: data.map(d => d.avg_score),
+                                    borderColor: 'rgba(102, 126, 234, 1)',
+                                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                                    borderWidth: 3,
+                                    fill: true,
+                                    tension: 0.4
+                                },
+                                {
+                                    label: '体验评分',
+                                    data: data.map(d => d.avg_experience),
+                                    borderColor: 'rgba(118, 75, 162, 1)',
+                                    backgroundColor: 'rgba(118, 75, 162, 0.1)',
+                                    borderWidth: 3,
+                                    fill: true,
+                                    tension: 0.4
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            plugins: {
+                                legend: {
+                                    display: true,
+                                    position: 'top'
+                                },
+                                tooltip: {
+                                    mode: 'index',
+                                    intersect: false,
+                                    callbacks: {
+                                        afterLabel: function(context) {
+                                            const index = context.dataIndex;
+                                            return `测试次数: ${data[index].count}`;
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    max: 10,
+                                    title: {
+                                        display: true,
+                                        text: '评分'
+                                    }
+                                },
+                                x: {
+                                    title: {
+                                        display: true,
+                                        text: '日期'
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('加载趋势数据失败:', error);
+            }
+        }
+
+        // 加载最近测试
+        async function loadRecentTests() {
+            try {
+                const response = await fetch('/api/dashboard/recent-tests?limit=10');
+                const result = await response.json();
+                
+                const tbody = document.getElementById('recent-tests-body');
+                
+                if (result.success && result.data.length > 0) {
+                    const data = result.data;
+                    
+                    tbody.innerHTML = data.map(test => `
+                        <tr>
+                            <td class="small">${test.timestamp.split(' ')[1]}</td>
+                            <td>
+                                <strong>${test.child_name}</strong>
+                                <br><small class="text-muted">${test.child_type}</small>
+                            </td>
+                            <td>
+                                <strong>${test.expert_score || test.avg_score}</strong>/10
+                            </td>
+                            <td>
+                                <strong>${test.child_score || test.avg_score}</strong>/10
+                            </td>
+                            <td>
+                                ${test.passed ? 
+                                    '<span class="badge-pass">✓ 通过</span>' : 
+                                    '<span class="badge-fail">✗ 未通过</span>'
+                                }
+                            </td>
+                        </tr>
+                    `).join('');
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">暂无测试数据</td></tr>';
+                }
+            } catch (error) {
+                console.error('加载最近测试失败:', error);
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">加载失败</td></tr>';
+            }
+        }
+
+        // 加载标注质量分析
+        async function loadAnnotationQuality() {
+            try {
+                const response = await fetch('/api/annotations');
+                const result = await response.json();
+                
+                if (result.success && result.annotations.length > 0) {
+                    const annotations = result.annotations;
+                    const annotated = annotations.filter(a => a.annotated);
+                    
+                    if (annotated.length > 0) {
+                        // 计算平均准确性和质量
+                        const avgAccuracy = annotated.reduce((sum, a) => sum + (a.expert_accuracy || 0), 0) / annotated.length;
+                        const avgQuality = annotated.reduce((sum, a) => sum + (a.expert_quality || 0), 0) / annotated.length;
+                        
+                        // 更新显示
+                        document.getElementById('model-accuracy').textContent = Math.round(avgAccuracy * 10) + '%';
+                        document.getElementById('expert-quality').textContent = Math.round(avgQuality * 10) + '%';
+                        
+                        // 创建标注质量图表
+                        const ctx = document.getElementById('annotationQualityChart');
+                        if (annotationQualityChart) {
+                            annotationQualityChart.destroy();
+                        }
+                        
+                        annotationQualityChart = new Chart(ctx, {
+                            type: 'doughnut',
+                            data: {
+                                labels: ['高准确性', '中等准确性', '低准确性'],
+                                datasets: [{
+                                    data: [
+                                        annotated.filter(a => (a.expert_accuracy || 0) >= 8).length,
+                                        annotated.filter(a => (a.expert_accuracy || 0) >= 6 && (a.expert_accuracy || 0) < 8).length,
+                                        annotated.filter(a => (a.expert_accuracy || 0) < 6).length
+                                    ],
+                                    backgroundColor: [
+                                        'rgba(40, 167, 69, 0.8)',
+                                        'rgba(255, 193, 7, 0.8)',
+                                        'rgba(220, 53, 69, 0.8)'
+                                    ],
+                                    borderWidth: 2
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: true,
+                                plugins: {
+                                    legend: {
+                                        position: 'bottom'
+                                    },
+                                    title: {
+                                        display: true,
+                                        text: '专家评分准确性分布'
+                                    }
+                                }
+                            }
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('加载标注质量分析失败:', error);
+            }
+        }
+
+        // 加载记忆测试专用数据
+        async function loadMemoryStats() {
+            try {
+                const response = await fetch('/api/dashboard/memory-stats');
+                const result = await response.json();
+                
+                if (result.success) {
+                    const data = result.data;
+                    
+                    // 渲染记忆能力雷达图
+                    renderMemoryRadarChart(data.avg_memory_scores);
+                    
+                    // 渲染记忆测试角色对比图
+                    renderMemoryRoleChart(data.memory_by_role);
+                    
+                    // 渲染记忆测试趋势图
+                    renderMemoryTrendChart(data.memory_trend);
+                    
+                    // 更新记忆测试详细统计表格
+                    updateMemoryStatsTable(data.memory_criteria_stats);
+                }
+            } catch (error) {
+                console.error('加载记忆测试数据失败:', error);
+            }
+        }
+
+        // 渲染记忆能力雷达图
+        function renderMemoryRadarChart(avgMemoryScores) {
+            const ctx = document.getElementById('memoryRadarChart').getContext('2d');
+            
+            const memoryLabels = {
+                'factual_memory': '事实类记忆',
+                'preference_memory': '儿童偏好记忆',
+                'character_consistency': '人设一致性',
+                'learning_progress_memory': '学习任务记忆',
+                'error_correction_memory': '误差自纠更新'
+            };
+            
+            const labels = Object.values(memoryLabels);
+            const scores = Object.values(avgMemoryScores);
+            
+            new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '记忆能力评分',
+                        data: scores,
+                        backgroundColor: 'rgba(255, 193, 7, 0.2)',
+                        borderColor: 'rgba(255, 193, 7, 1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: 'rgba(255, 193, 7, 1)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgba(255, 193, 7, 1)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 10,
+                            ticks: {
+                                stepSize: 2
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: '记忆能力各维度评分'
+                        }
+                    }
+                }
+            });
+        }
+
+        // 渲染记忆测试角色对比图
+        function renderMemoryRoleChart(memoryByRole) {
+            const ctx = document.getElementById('memoryRoleChart').getContext('2d');
+            
+            const roles = Object.keys(memoryByRole);
+            const scores = Object.values(memoryByRole).map(role => role.avg_score);
+            const counts = Object.values(memoryByRole).map(role => role.count);
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: roles,
+                    datasets: [{
+                        label: '平均记忆评分',
+                        data: scores,
+                        backgroundColor: 'rgba(255, 193, 7, 0.8)',
+                        borderColor: 'rgba(255, 193, 7, 1)',
+                        borderWidth: 1
+                    }, {
+                        label: '测试次数',
+                        data: counts,
+                        backgroundColor: 'rgba(108, 117, 125, 0.8)',
+                        borderColor: 'rgba(108, 117, 125, 1)',
+                        borderWidth: 1,
+                        yAxisID: 'y1'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            max: 10,
+                            title: {
+                                display: true,
+                                text: '平均评分'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: '测试次数'
+                            },
+                            grid: {
+                                drawOnChartArea: false,
+                            },
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true
+                        },
+                        title: {
+                            display: true,
+                            text: '各角色记忆测试表现对比'
+                        }
+                    }
+                }
+            });
+        }
+
+        // 渲染记忆测试趋势图
+        function renderMemoryTrendChart(memoryTrend) {
+            const ctx = document.getElementById('memoryTrendChart').getContext('2d');
+            
+            // 按日期分组数据
+            const dateGroups = {};
+            memoryTrend.forEach(item => {
+                if (!dateGroups[item.date]) {
+                    dateGroups[item.date] = [];
+                }
+                dateGroups[item.date].push(item.score);
+            });
+            
+            const dates = Object.keys(dateGroups).sort();
+            const avgScores = dates.map(date => {
+                const scores = dateGroups[date];
+                return scores.reduce((sum, score) => sum + score, 0) / scores.length;
+            });
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: '平均记忆评分',
+                        data: avgScores,
+                        borderColor: 'rgba(255, 193, 7, 1)',
+                        backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 10,
+                            title: {
+                                display: true,
+                                text: '平均评分'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: '日期'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true
+                        },
+                        title: {
+                            display: true,
+                            text: '记忆测试评分趋势'
+                        }
+                    }
+                }
+            });
+        }
+
+        // 更新记忆测试详细统计表格
+        function updateMemoryStatsTable(memoryCriteriaStats) {
+            const tbody = document.getElementById('memoryStatsTable');
+            tbody.innerHTML = '';
+            
+            const memoryLabels = {
+                'factual_memory': '事实类记忆',
+                'preference_memory': '儿童偏好记忆',
+                'character_consistency': '人设一致性',
+                'learning_progress_memory': '学习任务记忆',
+                'error_correction_memory': '误差自纠更新'
+            };
+            
+            Object.entries(memoryCriteriaStats).forEach(([key, stats]) => {
+                if (stats.scores && stats.scores.length > 0) {
+                    const avgScore = (stats.scores.reduce((sum, score) => sum + score, 0) / stats.scores.length).toFixed(2);
+                    const maxScore = Math.max(...stats.scores).toFixed(2);
+                    const minScore = Math.min(...stats.scores).toFixed(2);
+                    const variance = stats.scores.reduce((sum, score) => sum + Math.pow(score - avgScore, 2), 0) / stats.scores.length;
+                    const stdDev = Math.sqrt(variance).toFixed(2);
+                    
+                    const row = tbody.insertRow();
+                    row.innerHTML = `
+                        <td>${memoryLabels[key]}</td>
+                        <td>${avgScore}</td>
+                        <td>${stats.count}</td>
+                        <td>${maxScore}</td>
+                        <td>${minScore}</td>
+                        <td>${stdDev}</td>
+                    `;
+                }
+            });
+            
+            if (tbody.children.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">暂无数据</td></tr>';
+            }
+        }
+
+        // 刷新仪表盘
+        function refreshDashboard() {
+            const btn = document.querySelector('.refresh-btn i');
+            btn.style.animation = 'spin 1s linear';
+            
+            loadDashboard().then(() => {
+                setTimeout(() => {
+                    btn.style.animation = '';
+                }, 1000);
+            });
+        }
+    </script>
+    
+    <style>
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</body>
+</html>
+

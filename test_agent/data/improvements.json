@@ -1,0 +1,30 @@
+{
+  "analysis_date": "2025-10-19 17:04:59",
+  "total_annotations": 1,
+  "statistics": {
+    "avg_expert_accuracy": 8,
+    "avg_expert_quality": 7,
+    "avg_suggested_score": 6,
+    "avg_score_difference": 3
+  },
+  "issues": {
+    "low_accuracy_count": 0,
+    "low_quality_count": 0,
+    "accuracy_rate": 100.0,
+    "quality_rate": 100.0
+  },
+  "feedback_suggestions": [
+    {
+      "criterion": "⚙️ 教学自适应性（Adaptive Intelligence）.教学策略自适应",
+      "feedback": "专家评分过于严格，建议适当放宽标准"
+    }
+  ],
+  "prompt_improvements": [],
+  "scoring_improvements": [
+    "专家评分与建议评分偏差较大，需要调整评分标准"
+  ],
+  "recommendations": [
+    "专家评分与建议评分差异较大，建议重新审视评分标准的一致性",
+    "收集到 1 条反馈建议，建议优先处理高频问题"
+  ]
+}

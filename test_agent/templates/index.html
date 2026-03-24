@@ -1,0 +1,2586 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>儿童AI对话测试平台</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .card {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border: none;
+            margin-bottom: 20px;
+        }
+        .card-header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            border: none;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            border: none;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #4338ca 0%, #6d28d9 100%);
+        }
+        .result-card {
+            border-left: 4px solid #28a745;
+        }
+        .score-badge {
+            font-size: 1.2em;
+            padding: 8px 16px;
+        }
+        .loading {
+            display: none;
+        }
+        .child-card {
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+        .child-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.2);
+        }
+        .criteria-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .criteria-item.border-primary {
+            border: 2px solid #007bff;
+            background: #f0f8ff;
+        }
+        .card.border-secondary {
+            border-left: 3px solid #6c757d;
+        }
+        .card.border-secondary .card-header {
+            background: #e9ecef !important;
+            color: #495057 !important;
+        }
+        .criteria-main-card .card-header:hover {
+            background: linear-gradient(135deg, #4338ca 0%, #6d28d9 100%) !important;
+        }
+        .criteria-main-card .card-header {
+            transition: all 0.3s ease;
+        }
+        .criteria-main-card .card-body {
+            background-color: #f8fafc;
+        }
+        .criteria-main-card .card {
+            border-color: #e2e8f0;
+        }
+        .criteria-main-card .card-header {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        }
+        .form-check-input:checked {
+            background-color: #28a745;
+            border-color: #28a745;
+        }
+        .btn-outline-secondary:hover {
+            background-color: #6c757d;
+            border-color: #6c757d;
+        }
+        .main-criteria-card .card-header:hover {
+            opacity: 0.9;
+        }
+        .main-criteria-card .card-header {
+            transition: all 0.3s ease;
+        }
+        .main-criteria-card .card-body {
+            background-color: #f8fafc;
+        }
+        .badge.bg-light {
+            background-color: #f1f5f9 !important;
+            color: #475569 !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- 左侧配置面板 -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h4><i class="fas fa-cog"></i> 测试配置</h4>
+                    </div>
+                    <div class="card-body">
+                        <!-- 测试角色配置 -->
+                        <h5><i class="fas fa-child"></i> 测试角色</h5>
+                        <div id="children-container">
+                            <!-- 默认角色将自动加载 -->
+                                    </div>
+                        <div class="d-flex gap-2 mb-3">
+                        <button class="btn btn-outline-primary btn-sm" onclick="addChild()">
+                                <i class="fas fa-plus"></i> 添加自定义角色
+                        </button>
+                            <div class="dropdown">
+                                <button class="btn btn-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-user-plus"></i> 快速添加内置角色
+                                </button>
+                                <ul class="dropdown-menu" id="preset-children-menu">
+                                    <li><a class="dropdown-item text-muted" href="#">加载中...</a></li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- 评分标准配置 -->
+                        <h5 class="mt-4"><i class="fas fa-chart-line"></i> 评分标准</h5>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted small">默认显示所有内置标准</span>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button type="button" class="btn btn-outline-secondary" onclick="expandAllCriteria()">
+                                        <i class="fas fa-expand-arrows-alt"></i> 展开全部
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary" onclick="collapseAllCriteria()">
+                                        <i class="fas fa-compress-arrows-alt"></i> 收起全部
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="criteria-container">
+                            <!-- 默认评分标准将自动加载 -->
+                                </div>
+                        <div class="d-flex gap-2 mb-3">
+                        <button class="btn btn-outline-primary btn-sm" onclick="addCriteria()">
+                                <i class="fas fa-plus"></i> 添加自定义标准
+                        </button>
+                            <div class="dropdown">
+                                <button class="btn btn-success btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-star"></i> 快速添加内置标准
+                                </button>
+                                <ul class="dropdown-menu" id="preset-criteria-menu">
+                                    <li><a class="dropdown-item text-muted" href="#">加载中...</a></li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- 操作按钮 -->
+                        <div class="d-grid gap-2 mt-4">
+                            <button class="btn btn-primary" onclick="runTest()" id="start-test-btn">
+                                <i class="fas fa-play"></i> 开始测试
+                            </button>
+                            <button class="btn btn-success" onclick="startAutoTest()" id="auto-test-btn">
+                                <i class="fas fa-sync-alt"></i> 自动循环测试
+                            </button>
+                            <button class="btn btn-danger" onclick="stopAutoTest()" id="stop-auto-btn" style="display: none;">
+                                <i class="fas fa-stop"></i> 暂停自动测试
+                            </button>
+                            <a href="/dashboard" class="btn btn-info" target="_blank">
+                                <i class="fas fa-chart-line"></i> 数据仪表盘
+                            </a>
+                            <a href="/continuous-test" class="btn btn-success" target="_blank">
+                                <i class="fas fa-infinity"></i> 连续测试
+                            </a>
+                            <a href="/annotation" class="btn btn-warning" target="_blank">
+                                <i class="fas fa-edit"></i> 标注训练
+                            </a>
+                            <button class="btn btn-warning" onclick="clearResults()">
+                                <i class="fas fa-trash"></i> 清空结果
+                            </button>
+                        </div>
+                        
+                        <!-- 自动测试统计 -->
+                        <div id="auto-test-stats" class="mt-3" style="display: none;">
+                            <div class="alert alert-info">
+                                <h6 class="mb-2"><i class="fas fa-chart-line"></i> 自动测试统计</h6>
+                                <div class="small">
+                                    <div>已完成测试：<strong id="test-count">0</strong> 次</div>
+                                    <div>运行时间：<strong id="test-duration">00:00:00</strong></div>
+                                    <div>当前状态：<strong id="test-status">运行中</strong></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧结果面板 -->
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0"><i class="fas fa-chart-bar"></i> 测试结果</h4>
+                        <button class="btn btn-outline-light btn-sm" data-bs-toggle="modal" data-bs-target="#settingsModal">
+                            <i class="fas fa-cog"></i> 设置
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <!-- 加载状态 -->
+                        <div class="loading text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">测试中...</span>
+                            </div>
+                            <p class="mt-2">正在运行测试，请稍候...</p>
+                        </div>
+
+                        <!-- 结果展示 -->
+                        <div id="results-container">
+                            <div class="text-center text-muted">
+                                <i class="fas fa-clipboard-list fa-3x mb-3"></i>
+                                <p>配置测试角色和评分标准，然后点击"开始测试"</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 设置模态弹窗 -->
+    <div class="modal fade" id="settingsModal" tabindex="-1" aria-labelledby="settingsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="settingsModalLabel">
+                        <i class="fas fa-cog"></i> 高级设置
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- API密钥配置 -->
+                    <h5 class="mb-3"><i class="fas fa-key"></i> API密钥配置</h5>
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="dify-api-key" class="form-label">
+                                    <strong>Dify API Key</strong>
+                                    <small class="text-muted">(可选，留空使用默认配置)</small>
+                                </label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="dify-api-key" placeholder="留空使用默认密钥">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('dify-api-key')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                                <small class="form-text text-muted">用于连接Dify Agent</small>
+                            </div>
+                            <div class="mb-0">
+                                <label for="gemini-api-key" class="form-label">
+                                    <strong>Gemini API Key</strong>
+                                    <small class="text-muted">(可选，留空使用默认配置)</small>
+                                </label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="gemini-api-key" placeholder="留空使用默认密钥">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('gemini-api-key')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                                <small class="form-text text-muted">用于生成孩子回复和评分</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 对话轮数设置 -->
+                    <h5 class="mb-3"><i class="fas fa-sync-alt"></i> 对话轮数设置</h5>
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <label for="rounds-input" class="form-label">
+                                <strong>总测试轮数上限</strong>
+                            </label>
+                            <input type="number" class="form-control" id="rounds-input" min="100" max="10000" value="50">
+                            <small class="form-text text-muted">设置所有session和连续测试的最大总轮数，默认50轮。多session模式：每个session随机3-15轮，直到达到总轮数上限；连续测试：达到此上限或触发停止条件时结束。</small>
+                        </div>
+                    </div>
+
+                    <!-- Dify Inputs自定义参数 -->
+                    <h5 class="mb-3"><i class="fas fa-sliders-h"></i> Dify Inputs 自定义参数</h5>
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <!-- User ID字段映射 -->
+                            <div class="mb-4">
+                                <label for="user-id-field-name" class="form-label">
+                                    <strong><i class="fas fa-user"></i> 角色User ID字段映射</strong>
+                                    <small class="text-muted">(必填)</small>
+                                </label>
+                                <input type="text" class="form-control" id="user-id-field-name" 
+                                       value="user_id_for_test" placeholder="user_id_for_test">
+                                <small class="form-text text-muted">
+                                    Dify中用于接收角色User ID的字段名。角色的user_id（如 <code>user_bear_001</code>）会自动填入这个字段。
+                                    <br>常见字段名：<code>user_id_for_test</code>, <code>uid</code>, <code>user_id</code>, <code>customer_id</code>
+                                </small>
+                            </div>
+
+                            <hr>
+
+                            <!-- 其他自定义参数 -->
+                            <div class="mb-3">
+                                <label class="form-label">
+                                    <strong><i class="fas fa-cogs"></i> 其他自定义参数</strong>
+                                    <small class="text-muted">(可选)</small>
+                                </label>
+                                <div id="custom-inputs-container">
+                                    <!-- 自定义参数列表 -->
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="addCustomInput()">
+                                    <i class="fas fa-plus"></i> 添加参数
+                                </button>
+                            </div>
+
+                            <div class="alert alert-light mb-0">
+                                <small>
+                                    <strong><i class="fas fa-lightbulb text-warning"></i> 提示：</strong>
+                                    <ul class="mb-0 mt-1">
+                                        <li>支持变量：<code>{{user_id}}</code>, <code>{{run_id}}</code></li>
+                                        <li>例如：<code>run</code> = <code>{{run_id}}</code></li>
+                                        <li>例如：<code>session_key</code> = <code>{{user_id}}_{{run_id}}</code></li>
+                                    </ul>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> 关闭
+                    </button>
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
+                        <i class="fas fa-check"></i> 保存设置
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // ========== 自动测试全局变量 ==========
+        let isAutoTestRunning = false;  // 是否正在自动测试
+        let autoTestCount = 0;           // 已完成的测试次数
+        let autoTestStartTime = null;    // 自动测试开始时间
+        let autoTestTimer = null;        // 计时器
+        
+        // 切换密码可见性
+        function togglePasswordVisibility(inputId) {
+            const input = document.getElementById(inputId);
+            const button = input.nextElementSibling;
+            const icon = button.querySelector('i');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+        
+        // 获取用户设置的API密钥
+        function getApiKeys() {
+            const difyKey = document.getElementById('dify-api-key').value.trim();
+            const geminiKey = document.getElementById('gemini-api-key').value.trim();
+            
+            return {
+                dify_api_key: difyKey || null,  // 如果为空，后端使用默认值
+                gemini_api_key: geminiKey || null
+            };
+        }
+        
+        // 获取用户设置的对话轮数
+        function getRounds() {
+            return parseInt(document.getElementById('rounds-input').value) || 3;
+        }
+
+        // 添加自定义input参数
+        function addCustomInput() {
+            const container = document.getElementById('custom-inputs-container');
+            const inputGroup = document.createElement('div');
+            inputGroup.className = 'input-group mb-2 custom-input-item';
+            inputGroup.innerHTML = `
+                <input type="text" class="form-control form-control-sm custom-input-key" placeholder="参数名（如：custom_field）" style="max-width: 200px;">
+                <input type="text" class="form-control form-control-sm custom-input-value" placeholder="参数值（如：custom_value）">
+                <button class="btn btn-sm btn-outline-danger" type="button" onclick="removeCustomInput(this)">
+                    <i class="fas fa-trash"></i>
+                </button>
+            `;
+            container.appendChild(inputGroup);
+        }
+
+        // 删除自定义input参数
+        function removeCustomInput(button) {
+            const inputGroup = button.closest('.custom-input-item');
+            inputGroup.remove();
+        }
+
+        // 获取自定义inputs配置
+        function getCustomInputs(userId, runId) {
+            const customInputItems = document.querySelectorAll('.custom-input-item');
+            
+            // 获取用户配置的User ID字段名
+            const userIdFieldName = document.getElementById('user-id-field-name').value.trim() || 'user_id_for_test';
+            
+            // 构建基础inputs（User ID字段名可配置）
+            const inputs = {
+                [userIdFieldName]: userId  // 动态字段名
+            };
+            
+            // 添加其他自定义参数（支持变量替换）
+            customInputItems.forEach(item => {
+                const key = item.querySelector('.custom-input-key').value.trim();
+                let value = item.querySelector('.custom-input-value').value.trim();
+                
+                if (key && value) {
+                    // 支持变量替换
+                    value = value.replace(/\{\{user_id\}\}/g, userId);
+                    value = value.replace(/\{\{run_id\}\}/g, runId);
+                    inputs[key] = value;
+                }
+            });
+            
+            console.log(`[Custom Inputs] User ID字段: ${userIdFieldName}, 构建的inputs:`, inputs);
+            
+            return inputs;
+        }
+        
+        // 内置角色数据（从API加载）
+        let presetChildren = {};
+        // 已添加的角色ID集合
+        let addedChildrenIds = new Set();
+
+        // 从API加载内置角色数据
+        async function loadPresetChildren() {
+            try {
+                const response = await fetch('/api/preset-children');
+                if (response.ok) {
+                    presetChildren = await response.json();
+                    updatePresetChildrenMenu();
+                    console.log('✅ 内置角色加载成功:', Object.keys(presetChildren).length, '个角色');
+                    
+                    // 自动添加第一个预设角色作为默认角色
+                    const firstPresetId = Object.keys(presetChildren)[0];
+                    if (firstPresetId) {
+                        addPresetChild(firstPresetId);
+                        addedChildrenIds.add(firstPresetId);
+                        console.log('✅ 已自动添加默认角色:', presetChildren[firstPresetId].name);
+                        // 更新菜单以排除已添加的角色
+                        updatePresetChildrenMenu();
+                    }
+                } else {
+                    console.error('❌ 加载内置角色失败:', response.status);
+                }
+            } catch (error) {
+                console.error('❌ 加载内置角色异常:', error);
+            }
+        }
+
+        // 更新内置角色下拉菜单
+        function updatePresetChildrenMenu() {
+            const menu = document.getElementById('preset-children-menu');
+            if (!menu) return;
+            
+            menu.innerHTML = '';
+            
+            // 过滤掉已添加的角色
+            const availableChildren = Object.entries(presetChildren).filter(([id, child]) => !addedChildrenIds.has(id));
+            
+            if (availableChildren.length === 0) {
+                menu.innerHTML = '<li><a class="dropdown-item text-muted" href="#">所有角色已添加</a></li>';
+                return;
+            }
+            
+            // 动态生成菜单项（只显示未添加的角色）
+            for (const [id, child] of availableChildren) {
+                const menuItem = document.createElement('li');
+                menuItem.innerHTML = `
+                    <a class="dropdown-item" href="#" onclick="addPresetChild('${id}'); return false;">
+                        ${child.emoji || '🧒'} ${child.name} - ${child.type || '测试型'}
+                    </a>
+                `;
+                menu.appendChild(menuItem);
+            }
+        }
+
+        // 内置评分标准数据（从API加载）
+        let presetCriteria = {};
+        // 已添加的评分标准ID集合
+        let addedCriteriaIds = new Set();
+
+        // 从API加载内置评分标准数据
+        async function loadPresetCriteria() {
+            try {
+                const response = await fetch('/api/preset-criteria');
+                if (response.ok) {
+                    presetCriteria = await response.json();
+                    updatePresetCriteriaMenu();
+                    console.log('✅ 内置评分标准加载成功:', Object.keys(presetCriteria).length, '个标准');
+                    
+                    // 自动加载所有内置评分标准
+                    loadAllPresetCriteria();
+                } else {
+                    console.error('❌ 加载内置评分标准失败:', response.status);
+                }
+            } catch (error) {
+                console.error('❌ 加载内置评分标准异常:', error);
+            }
+        }
+
+        // 加载所有内置评分标准
+        function loadAllPresetCriteria() {
+            const container = document.getElementById('criteria-container');
+            container.innerHTML = '';
+            
+            // 遍历所有一级指标
+            Object.entries(presetCriteria).forEach(([mainId, mainCriterion]) => {
+                // 创建一级指标卡片
+                const mainCard = document.createElement('div');
+                mainCard.className = 'criteria-main-card mb-3';
+                mainCard.setAttribute('data-main-id', mainId);
+                mainCard.id = `criteria-group-${mainId}`;
+                
+                mainCard.innerHTML = `
+                    <div class="card border-primary">
+                        <div class="card-header bg-primary text-white">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div onclick="toggleMainCriteria('${mainId}')" style="cursor: pointer; flex: 1;">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-chevron-down" id="chevron-${mainId}"></i>
+                                        ${mainCriterion.name.replace(/（.*?）/g, '').trim()}
+                                    </h6>
+                                    <small class="opacity-75">${mainCriterion.description}</small>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <small class="opacity-75">权重: ${(mainCriterion.weight * 100).toFixed(0)}%</small>
+                                    <button class="btn btn-sm btn-outline-light" onclick="toggleGroupEnabled('${mainId}')" title="一键禁用/启用整组指标">
+                                        <i class="fas fa-check-circle" id="group-toggle-${mainId}"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body" id="sub-criteria-${mainId}" style="display: none;">
+                            <div class="row">
+                                ${Object.entries(mainCriterion.sub_criteria).map(([subId, subCriterion]) => `
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card border-secondary">
+                                            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                                <h6 class="mb-0">${subCriterion.name.replace(/（.*?）/g, '').trim()}</h6>
+                                                <button class="btn btn-sm btn-outline-secondary" onclick="toggleSubCriterion('${mainId}', '${subId}')" title="禁用/启用">
+                                                    <i class="fas fa-eye" id="eye-${mainId}-${subId}"></i>
+                                                </button>
+                                            </div>
+                                            <div class="card-body">
+                                                <p class="small text-muted mb-2">${subCriterion.description}</p>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="checkbox-${mainId}-${subId}" checked>
+                                                    <label class="form-check-label small" for="checkbox-${mainId}-${subId}">
+                                                        启用此指标
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(mainCard);
+                
+                // 记录所有子指标为已添加
+                Object.keys(mainCriterion.sub_criteria).forEach(subId => {
+                    addedCriteriaIds.add(`${mainId}.${subId}`);
+                });
+            });
+            
+            // 更新菜单
+            updatePresetCriteriaMenu();
+        }
+
+        // 更新内置评分标准下拉菜单
+        function updatePresetCriteriaMenu() {
+            const menu = document.getElementById('preset-criteria-menu');
+            if (!menu) return;
+            
+            menu.innerHTML = '<li><a class="dropdown-item text-muted" href="#">所有标准已默认加载</a></li>';
+        }
+
+        // 切换一级指标展开/收起
+        function toggleMainCriteria(mainId) {
+            const subCriteriaDiv = document.getElementById(`sub-criteria-${mainId}`);
+            const chevron = document.getElementById(`chevron-${mainId}`);
+            
+            if (subCriteriaDiv.style.display === 'none') {
+                subCriteriaDiv.style.display = 'block';
+                chevron.className = 'fas fa-chevron-up';
+            } else {
+                subCriteriaDiv.style.display = 'none';
+                chevron.className = 'fas fa-chevron-down';
+            }
+        }
+
+        // 切换子指标启用/禁用
+        function toggleSubCriterion(mainId, subId) {
+            const checkbox = document.getElementById(`checkbox-${mainId}-${subId}`);
+            const eye = document.getElementById(`eye-${mainId}-${subId}`);
+            const subCriterionId = `${mainId}.${subId}`;
+            
+            if (checkbox.checked) {
+                // 禁用
+                checkbox.checked = false;
+                eye.className = 'fas fa-eye-slash text-muted';
+                addedCriteriaIds.delete(subCriterionId);
+            } else {
+                // 启用
+                checkbox.checked = true;
+                eye.className = 'fas fa-eye text-success';
+                addedCriteriaIds.add(subCriterionId);
+            }
+        }
+
+        // 展开所有一级指标
+        function expandAllCriteria() {
+            Object.keys(presetCriteria).forEach(mainId => {
+                const subCriteriaDiv = document.getElementById(`sub-criteria-${mainId}`);
+                const chevron = document.getElementById(`chevron-${mainId}`);
+                
+                if (subCriteriaDiv && subCriteriaDiv.style.display === 'none') {
+                    subCriteriaDiv.style.display = 'block';
+                    chevron.className = 'fas fa-chevron-up';
+                }
+            });
+        }
+
+        // 收起所有一级指标
+        function collapseAllCriteria() {
+            Object.keys(presetCriteria).forEach(mainId => {
+                const subCriteriaDiv = document.getElementById(`sub-criteria-${mainId}`);
+                const chevron = document.getElementById(`chevron-${mainId}`);
+                
+                if (subCriteriaDiv && subCriteriaDiv.style.display === 'block') {
+                    subCriteriaDiv.style.display = 'none';
+                    chevron.className = 'fas fa-chevron-down';
+                }
+            });
+        }
+
+        // 一键禁用/启用整组指标
+        function toggleGroupEnabled(groupId) {
+            const mainCriterion = presetCriteria[groupId];
+            if (!mainCriterion) {
+                console.log(`⚠️ 未找到评分标准组: ${groupId}`);
+                return;
+            }
+            
+            // 检查当前组的状态（是否所有子指标都被启用）
+            const subCriteriaIds = Object.keys(mainCriterion.sub_criteria);
+            const enabledCount = subCriteriaIds.filter(subId => {
+                const checkbox = document.getElementById(`checkbox-${groupId}-${subId}`);
+                return checkbox && checkbox.checked;
+            }).length;
+            
+            const isAllEnabled = enabledCount === subCriteriaIds.length;
+            const newState = !isAllEnabled; // 切换状态
+            
+            // 更新所有子指标的启用状态
+            subCriteriaIds.forEach(subId => {
+                const checkbox = document.getElementById(`checkbox-${groupId}-${subId}`);
+                const eyeIcon = document.getElementById(`eye-${groupId}-${subId}`);
+                
+                if (checkbox) {
+                    checkbox.checked = newState;
+                }
+                if (eyeIcon) {
+                    eyeIcon.className = newState ? 'fas fa-eye' : 'fas fa-eye-slash';
+                }
+            });
+            
+            // 更新组按钮图标
+            const groupToggleIcon = document.getElementById(`group-toggle-${groupId}`);
+            if (groupToggleIcon) {
+                groupToggleIcon.className = newState ? 'fas fa-check-circle' : 'fas fa-times-circle';
+            }
+            
+            console.log(`✅ 已${newState ? '启用' : '禁用'}评分标准组: ${groupId}`);
+        }
+
+        // 切换一级指标结果展开/收起
+        function toggleMainCriteriaResults(mainKey) {
+            const subCriteriaDiv = document.getElementById(`sub-criteria-results-${mainKey}`);
+            const chevron = document.getElementById(`chevron-result-${mainKey}`);
+            
+            if (subCriteriaDiv.style.display === 'none') {
+                subCriteriaDiv.style.display = 'block';
+                chevron.className = 'fas fa-chevron-up';
+            } else {
+                subCriteriaDiv.style.display = 'none';
+                chevron.className = 'fas fa-chevron-down';
+            }
+        }
+
+        // 显示子指标选择弹窗
+        function showSubCriteria(criterionId) {
+            const criterion = presetCriteria[criterionId];
+            if (!criterion || !criterion.sub_criteria) return;
+            
+            // 创建模态弹窗
+            const modalHtml = `
+                <div class="modal fade" id="subCriteriaModal" tabindex="-1" aria-labelledby="subCriteriaModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header bg-primary text-white">
+                                <h5 class="modal-title" id="subCriteriaModalLabel">
+                                    <i class="fas fa-list"></i> 选择 ${criterion.name} 的子指标
+                                </h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p class="text-muted mb-3">${criterion.description}</p>
+                                <div class="row">
+                                    ${Object.entries(criterion.sub_criteria).map(([subId, subCriterion]) => {
+                                        const subCriterionId = `${criterionId}.${subId}`;
+                                        const isAdded = addedCriteriaIds.has(subCriterionId);
+                                        return `
+                                        <div class="col-md-6 mb-3">
+                                            <div class="card border-secondary ${isAdded ? 'opacity-50' : ''}">
+                                                <div class="card-header bg-light">
+                                                    <h6 class="mb-0">${subCriterion.name} ${isAdded ? '<span class="badge bg-success">已添加</span>' : ''}</h6>
+                                                </div>
+                                                <div class="card-body">
+                                                    <p class="small text-muted mb-2">${subCriterion.description}</p>
+                                                    ${isAdded ? 
+                                                        '<button class="btn btn-sm btn-outline-secondary" disabled><i class="fas fa-check"></i> 已添加</button>' :
+                                                        `<button class="btn btn-sm btn-outline-primary" onclick="addSubCriterion('${criterionId}', '${subId}'); return false;"><i class="fas fa-plus"></i> 添加此指标</button>`
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `}).join('')}
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                    <i class="fas fa-times"></i> 关闭
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // 移除已存在的模态弹窗
+            const existingModal = document.getElementById('subCriteriaModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // 添加新的模态弹窗
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            
+            // 显示模态弹窗
+            const modal = new bootstrap.Modal(document.getElementById('subCriteriaModal'));
+            modal.show();
+        }
+        
+        // 添加子指标
+        function addSubCriterion(criterionId, subId) {
+            const criterion = presetCriteria[criterionId];
+            if (!criterion || !criterion.sub_criteria || !criterion.sub_criteria[subId]) return;
+            
+            // 检查是否已经添加过这个子指标
+            const subCriterionId = `${criterionId}.${subId}`;
+            if (addedCriteriaIds.has(subCriterionId)) {
+                alert('该评分标准已经添加过了！');
+                return;
+            }
+            
+            const subCriterion = criterion.sub_criteria[subId];
+            const container = document.getElementById('criteria-container');
+            
+            // 创建子指标项
+            const criteriaItem = document.createElement('div');
+            criteriaItem.className = 'criteria-item';
+            criteriaItem.setAttribute('data-criterion-id', subCriterionId);
+            criteriaItem.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <input type="text" class="form-control form-control-sm" style="width: 70%;" placeholder="评分标准名称" value="${subCriterion.name}">
+                    <button class="btn btn-sm btn-outline-danger" onclick="removeCriteria(this)"><i class="fas fa-trash"></i></button>
+                </div>
+                <textarea class="form-control form-control-sm" rows="3" placeholder="描述如何评估这个标准..." style="font-size: 0.85rem;">${subCriterion.prompt}</textarea>
+            `;
+            container.appendChild(criteriaItem);
+            
+            // 记录已添加的标准ID
+            addedCriteriaIds.add(subCriterionId);
+            
+            // 关闭模态弹窗
+            const modal = bootstrap.Modal.getInstance(document.getElementById('subCriteriaModal'));
+            if (modal) {
+                modal.hide();
+            }
+            
+            // 更新菜单
+            updatePresetCriteriaMenu();
+        }
+        
+        // 添加预设评分标准（整个一级指标）
+        function addPresetCriterion(criterionId) {
+            const criterion = presetCriteria[criterionId];
+            if (!criterion) return;
+            
+            // 防止重复添加
+            if (addedCriteriaIds.has(criterionId)) {
+                console.log('⚠️ 评分标准已存在，不重复添加:', criterion.name);
+                return;
+            }
+            
+            const container = document.getElementById('criteria-container');
+            
+            // 检查是否是一级指标（有sub_criteria）
+            if (criterion.sub_criteria && Object.keys(criterion.sub_criteria).length > 0) {
+                // 一级指标：显示主指标和所有子指标
+                const mainItem = document.createElement('div');
+                mainItem.className = 'criteria-item border-primary';
+                mainItem.setAttribute('data-criterion-id', criterionId);
+                mainItem.innerHTML = `
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h6 class="mb-0"><i class="fas fa-star"></i> ${criterion.name}</h6>
+                            <small>${criterion.description}</small>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                ${Object.entries(criterion.sub_criteria).map(([subId, subCriterion]) => `
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card border-secondary">
+                                            <div class="card-header bg-light">
+                                                <h6 class="mb-0">${subCriterion.name}</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <textarea class="form-control form-control-sm" rows="3" placeholder="描述如何评估这个标准..." style="font-size: 0.85rem;">${subCriterion.prompt}</textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <div class="text-end">
+                                <button class="btn btn-sm btn-outline-danger" onclick="removeCriteria(this)"><i class="fas fa-trash"></i> 删除整个指标组</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(mainItem);
+            } else {
+                // 二级指标或旧格式：显示单个指标
+                const criteriaItem = document.createElement('div');
+                criteriaItem.className = 'criteria-item';
+                criteriaItem.setAttribute('data-criterion-id', criterionId);
+                criteriaItem.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <input type="text" class="form-control form-control-sm" style="width: 70%;" placeholder="评分标准名称" value="${criterion.name}">
+                        <button class="btn btn-sm btn-outline-danger" onclick="removeCriteria(this)"><i class="fas fa-trash"></i></button>
+                    </div>
+                    <textarea class="form-control" rows="5" placeholder="描述如何评估这个标准...">${criterion.prompt || ''}</textarea>
+                `;
+                container.appendChild(criteriaItem);
+            }
+            
+            // 记录已添加的标准ID
+            addedCriteriaIds.add(criterionId);
+            // 更新菜单，排除已添加的标准
+            updatePresetCriteriaMenu();
+        }
+
+        // 页面加载时自动加载内置角色和评分标准
+        document.addEventListener('DOMContentLoaded', function() {
+            loadPresetChildren();
+            loadPresetCriteria();
+            // 添加默认的自定义参数示例
+            addDefaultCustomInputs();
+        });
+
+        // 添加默认的自定义参数示例
+        function addDefaultCustomInputs() {
+            const container = document.getElementById('custom-inputs-container');
+            if (container && container.children.length === 0) {
+                // 添加 run 参数示例
+                addCustomInputWithValues('run', '{{run_id}}');
+                // 添加 agent 参数示例
+                addCustomInputWithValues('agent', 'memory_test_agent');
+            }
+        }
+
+        // 添加带有初始值的自定义input
+        function addCustomInputWithValues(key, value) {
+            const container = document.getElementById('custom-inputs-container');
+            const inputGroup = document.createElement('div');
+            inputGroup.className = 'input-group mb-2 custom-input-item';
+            inputGroup.innerHTML = `
+                <input type="text" class="form-control form-control-sm custom-input-key" placeholder="参数名" value="${key}" style="max-width: 200px;">
+                <input type="text" class="form-control form-control-sm custom-input-value" placeholder="参数值" value="${value}">
+                <button class="btn btn-sm btn-outline-danger" type="button" onclick="removeCustomInput(this)">
+                    <i class="fas fa-trash"></i>
+                </button>
+            `;
+            container.appendChild(inputGroup);
+        }
+
+        // 添加预设角色
+        function addPresetChild(presetId) {
+            const preset = presetChildren[presetId];
+            if (!preset) return;
+            
+            // 防止重复添加
+            if (addedChildrenIds.has(presetId)) {
+                console.log('⚠️ 角色已存在，不重复添加:', preset.name);
+                return;
+            }
+            
+            const container = document.getElementById('children-container');
+            const childCard = document.createElement('div');
+            childCard.className = 'child-card';
+            childCard.setAttribute('data-preset-id', presetId); // 保存ID用于删除时识别
+            childCard.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <input type="text" class="form-control form-control-sm mb-2" placeholder="姓名" value="${preset.name}" style="font-size: 0.85rem;">
+                    </div>
+                    <div class="col-md-6">
+                        <input type="number" class="form-control form-control-sm mb-2" placeholder="年龄" value="${preset.age}" style="font-size: 0.85rem;">
+                    </div>
+                </div>
+                <textarea class="form-control form-control-sm mb-2" placeholder="性格特点" rows="4" style="font-size: 0.85rem;">${preset.traits}</textarea>
+                <button class="btn btn-sm btn-danger" onclick="removeChildCard(this)"><i class="fas fa-trash"></i> 删除</button>
+            `;
+            container.appendChild(childCard);
+            
+            // 记录已添加的角色ID
+            addedChildrenIds.add(presetId);
+            // 更新菜单，排除已添加的角色
+            updatePresetChildrenMenu();
+        }
+        
+        // 添加自定义测试角色
+        function addChild() {
+            const container = document.getElementById('children-container');
+            const childCard = document.createElement('div');
+            const customUserId = `user_custom_${Date.now()}`; // 为自定义角色生成唯一user_id
+            childCard.className = 'child-card';
+            childCard.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <input type="text" class="form-control form-control-sm mb-2" placeholder="姓名" value="新角色" style="font-size: 0.85rem;">
+                    </div>
+                    <div class="col-md-6">
+                        <input type="number" class="form-control form-control-sm mb-2" placeholder="年龄" value="8" style="font-size: 0.85rem;">
+                    </div>
+                </div>
+                <textarea class="form-control form-control-sm mb-2" placeholder="性格特点" rows="4" style="font-size: 0.85rem;">活泼好动，喜欢运动和游戏。</textarea>
+                <input type="hidden" class="custom-user-id" value="${customUserId}">
+                <button class="btn btn-sm btn-danger" onclick="removeChildCard(this)"><i class="fas fa-trash"></i> 删除</button>
+            `;
+            container.appendChild(childCard);
+        }
+
+        // 删除测试角色
+        function removeChildCard(button) {
+            const childCard = button.closest('.child-card');
+            const presetId = childCard.getAttribute('data-preset-id');
+            
+            if (document.querySelectorAll('.child-card').length > 1) {
+                childCard.remove();
+                
+                // 如果是预设角色，从已添加集合中移除
+                if (presetId) {
+                    addedChildrenIds.delete(presetId);
+                    // 更新菜单，该角色可以再次添加
+                    updatePresetChildrenMenu();
+                    console.log('✅ 已移除角色:', presetId);
+                }
+            } else {
+                alert('至少需要保留一个测试角色');
+            }
+        }
+
+        // 添加评分标准
+        function addCriteria() {
+            const container = document.getElementById('criteria-container');
+            const criteriaItem = document.createElement('div');
+            criteriaItem.className = 'criteria-item';
+            criteriaItem.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <input type="text" class="form-control form-control-sm" style="width: 70%;" placeholder="评分标准名称" value="新评分标准">
+                    <button class="btn btn-sm btn-outline-danger" onclick="removeCriteria(this)"><i class="fas fa-trash"></i></button>
+                </div>
+                <textarea class="form-control form-control-sm" rows="3" placeholder="描述如何评估这个标准..." style="font-size: 0.85rem;"></textarea>
+            `;
+            container.appendChild(criteriaItem);
+        }
+
+        // 删除评分标准（只用于自定义标准）
+        function removeCriteria(button) {
+            const criteriaItem = button.closest('.criteria-item');
+            const criterionId = criteriaItem.getAttribute('data-criterion-id');
+            
+            // 检查是否是内置标准
+            if (criterionId && criterionId.includes('.')) {
+                alert('内置评分标准不能删除，只能禁用！请点击眼睛图标来禁用/启用。');
+                return;
+            }
+            
+            // 直接删除，不再限制数量
+            criteriaItem.remove();
+            console.log('✅ 已删除自定义评分标准');
+        }
+
+        // 运行测试
+        async function runTest() {
+            // 收集配置数据
+            const children = [];
+            document.querySelectorAll('.child-card').forEach(card => {
+                const inputs = card.querySelectorAll('input, textarea');
+                const presetId = card.getAttribute('data-preset-id');
+                const customUserId = card.querySelector('.custom-user-id');
+                
+                // 构建角色数据
+                const childData = {
+                    name: inputs[0].value,
+                    age: parseInt(inputs[1].value),
+                    traits: inputs[2].value
+                };
+                
+                // 如果是预设角色，使用预设的user_id
+                if (presetId) {
+                    const presetChild = presetChildren[presetId];
+                    if (presetChild) {
+                        childData.user_id = presetChild.user_id;
+                        childData.id = presetChild.id;
+                        childData.is_builtin = true;
+                    }
+                } else if (customUserId) {
+                    // 如果是自定义角色，使用生成的user_id
+                    childData.user_id = customUserId.value;
+                    childData.id = customUserId.value;
+                    childData.is_builtin = false;
+                }
+                
+                children.push(childData);
+            });
+
+            // 收集启用的评分标准
+            const criteria = {};
+            
+            // 收集内置评分标准（只收集启用的）
+            Object.entries(presetCriteria).forEach(([mainId, mainCriterion]) => {
+                    const subCriteria = {};
+                let hasEnabledSubCriteria = false;
+                
+                Object.entries(mainCriterion.sub_criteria).forEach(([subId, subCriterion]) => {
+                    const subCriterionId = `${mainId}.${subId}`;
+                    const checkbox = document.getElementById(`checkbox-${mainId}-${subId}`);
+                    
+                    // 只收集启用的子指标
+                    if (checkbox && checkbox.checked && addedCriteriaIds.has(subCriterionId)) {
+                        subCriteria[subCriterion.name] = subCriterion.prompt;
+                        hasEnabledSubCriteria = true;
+                    }
+                });
+                
+                // 如果有启用的子指标，添加一级指标
+                if (hasEnabledSubCriteria) {
+                    criteria[mainCriterion.name] = {
+                        name: mainCriterion.name,
+                        description: mainCriterion.description,
+                        weight: mainCriterion.weight,
+                        sub_criteria: subCriteria
+                    };
+                }
+            });
+            
+            // 收集自定义评分标准
+            document.querySelectorAll('.criteria-item').forEach((item, index) => {
+                const criterionId = item.getAttribute('data-criterion-id');
+                
+                // 只处理自定义标准（没有data-criterion-id或不是内置标准）
+                if (!criterionId || !criterionId.includes('.')) {
+                    const nameInput = item.querySelector('input[type="text"]');
+                    const textarea = item.querySelector('textarea');
+                    const criteriaName = nameInput ? nameInput.value.trim() : `自定义标准${index + 1}`;
+                    
+                    if (criteriaName && textarea && textarea.value.trim()) {
+                        criteria[criteriaName] = textarea.value.trim();
+                    }
+                }
+            });
+
+            // 显示实时进度
+            showRealTimeProgress(children);
+
+            // 依次测试每个角色
+            for (let i = 0; i < children.length; i++) {
+                await runRealTimeTest(children[i], criteria, i);
+            }
+            
+            // 如果是自动测试模式，完成后自动开始下一轮
+            if (isAutoTestRunning) {
+                autoTestCount++;
+                document.getElementById('test-count').textContent = autoTestCount;
+                
+                // 等待1秒后开始下一轮测试
+                setTimeout(() => {
+                    if (isAutoTestRunning) {
+                        console.log(`✅ 第${autoTestCount}轮测试完成，准备开始第${autoTestCount + 1}轮...`);
+                        runTest();  // 递归调用，开始新一轮
+                    }
+                }, 1000);
+            }
+        }
+        
+        // ========== 自动测试功能 ==========
+        
+        // 启动自动循环测试
+        function startAutoTest() {
+            if (isAutoTestRunning) {
+                alert('自动测试已经在运行中！');
+                return;
+            }
+            
+            // 确认开始
+            if (!confirm('确定要开始自动循环测试吗？\n\n测试将持续运行直到您点击"暂停"按钮。\n每轮测试完成后会自动开始下一轮，所有数据会持续保存。')) {
+                return;
+            }
+            
+            // 设置状态
+            isAutoTestRunning = true;
+            autoTestCount = 0;
+            autoTestStartTime = new Date();
+            
+            // 更新UI
+            document.getElementById('auto-test-btn').style.display = 'none';
+            document.getElementById('start-test-btn').style.display = 'none';
+            document.getElementById('stop-auto-btn').style.display = 'block';
+            document.getElementById('auto-test-stats').style.display = 'block';
+            document.getElementById('test-status').textContent = '运行中';
+            document.getElementById('test-count').textContent = '0';
+            
+            // 启动计时器
+            autoTestTimer = setInterval(updateTestDuration, 1000);
+            
+            // 开始第一轮测试
+            console.log('🚀 自动测试已启动');
+            runTest();
+        }
+        
+        // 停止自动测试
+        function stopAutoTest() {
+            if (!isAutoTestRunning) {
+                return;
+            }
+            
+            // 确认停止
+            if (!confirm(`确定要停止自动测试吗？\n\n已完成 ${autoTestCount} 轮测试。`)) {
+                return;
+            }
+            
+            // 设置状态
+            isAutoTestRunning = false;
+            
+            // 清除计时器
+            if (autoTestTimer) {
+                clearInterval(autoTestTimer);
+                autoTestTimer = null;
+            }
+            
+            // 更新UI
+            document.getElementById('auto-test-btn').style.display = 'block';
+            document.getElementById('start-test-btn').style.display = 'block';
+            document.getElementById('stop-auto-btn').style.display = 'none';
+            document.getElementById('test-status').textContent = '已停止';
+            
+            console.log(`⏸️ 自动测试已停止，共完成 ${autoTestCount} 轮测试`);
+            
+            // 3秒后隐藏统计信息
+            setTimeout(() => {
+                if (!isAutoTestRunning) {
+                    document.getElementById('auto-test-stats').style.display = 'none';
+                }
+            }, 3000);
+        }
+        
+        // 更新运行时间显示
+        function updateTestDuration() {
+            if (!autoTestStartTime) return;
+            
+            const now = new Date();
+            const duration = Math.floor((now - autoTestStartTime) / 1000);
+            
+            const hours = Math.floor(duration / 3600);
+            const minutes = Math.floor((duration % 3600) / 60);
+            const seconds = duration % 60;
+            
+            const timeStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            document.getElementById('test-duration').textContent = timeStr;
+        }
+
+        // 多Session自动测试 - 无限循环模式
+        let isTestRunning = false; // 全局停止标志
+        let currentTestId = null;  // 追踪当前测试的ID，用于实时保存
+        
+        // 停止测试函数
+        function stopTest() {
+            isTestRunning = false;
+            console.log('用户请求停止测试');
+        }
+        
+        // 保存Round评测结果到JSON
+        async function saveRoundResult(roundData) {
+            try {
+                console.log(`[保存Round] 准备发送请求到 /api/save-round-result`);
+                console.log(`[保存Round] 数据大小: ${JSON.stringify(roundData).length} bytes`);
+                console.log(`[保存Round] Round数据概览:`, {
+                    round_number: roundData.round_number,
+                    test_id: roundData.test_id,
+                    conversations_count: roundData.conversations?.length || 0,
+                    scores_count: Object.keys(roundData.scores || {}).length
+                });
+                
+                const response = await fetch('/api/save-round-result', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(roundData)
+                });
+                
+                console.log(`[保存Round] 收到响应，状态码: ${response.status}`);
+                const result = await response.json();
+                console.log(`[保存Round] 响应数据:`, result);
+                
+                if (result.success) {
+                    // 更新全局test_id（第一次保存时会返回新的test_id）
+                    if (result.test_id) {
+                        currentTestId = result.test_id;
+                    }
+                    console.log(`[保存Round] ✅ ${result.message}, Test ID: ${currentTestId}`);
+                } else {
+                    console.error(`[保存Round] ❌ 保存失败:`, result.message);
+                }
+            } catch (error) {
+                console.error(`[保存Round] ❌ 保存出错:`, error);
+                console.error(`[保存Round] 错误详情:`, error.stack);
+            }
+        }
+        
+        async function runRealTimeTest(child, criteria, childIndex) {
+            const container = document.getElementById('results-container');
+            const allCards = container.querySelectorAll('.result-card');
+            const currentCard = allCards[childIndex];
+            const conversationContainer = currentCard.querySelector('.conversation-container');
+            const progressText = currentCard.querySelector('.progress-text');
+            
+            // 获取角色的固定user_id
+            const userId = child.user_id || `user_${child.id}`;
+            
+            // 重置test_id（开始新测试）
+            currentTestId = null;
+            
+            let roundCount = 0; // Round计数
+            let totalRounds = 0;
+            const allConversations = []; // 存储所有对话
+            const sessionResults = []; // 存储每个round的评测结果
+            const ROUNDS_PER_ROUND = getRounds(); // 每个round的总轮数（如30轮）
+            
+            // 设置停止标志
+            isTestRunning = true;
+            
+            // 添加停止按钮
+            if (progressText) {
+                progressText.innerHTML = `
+                    <i class="fas fa-spinner fa-spin"></i> 开始连续测试模式... (每${ROUNDS_PER_ROUND}轮一个Round，评测后等待20秒自动继续)
+                    <button class="btn btn-sm btn-danger ms-3" onclick="stopTest()">
+                        <i class="fas fa-stop"></i> 暂停测试
+                    </button>
+                `;
+            }
+            
+            // 持续进行多个round，直到用户点击暂停
+            while (isTestRunning) {
+                roundCount++; // Round计数递增
+                let sessionNumber = 0; // 每个Round内的Session计数，从1开始
+                let roundTotalRounds = 0; // 当前Round累计轮数
+                const roundConversations = []; // 当前Round的所有对话
+                let conversationId = null; // 每个新round重置conversation_id，AI重新开始
+                
+                // 在当前round内进行多个session，直到达到ROUNDS_PER_ROUND
+                while (roundTotalRounds < ROUNDS_PER_ROUND && isTestRunning) {
+                    sessionNumber++; // Session计数递增
+                const sessionConversations = [];
+                
+                    // 计算本session应该进行的轮数
+                    const remainingRounds = ROUNDS_PER_ROUND - roundTotalRounds;
+                let sessionRounds;
+                if (remainingRounds < 3) {
+                        // 剩余轮数太少，结束当前round
+                    break;
+                } else if (remainingRounds < 15) {
+                    sessionRounds = remainingRounds;
+                } else {
+                        sessionRounds = Math.floor(Math.random() * 13) + 3; // 3-15轮随机
+                }
+                
+                if (progressText) {
+                        progressText.innerHTML = `
+                            <i class="fas fa-comments text-primary"></i> Round ${roundCount} Session ${sessionNumber} 进行中... (${sessionRounds}轮) [Round累计${roundTotalRounds}/${ROUNDS_PER_ROUND}轮]
+                            <button class="btn btn-sm btn-danger ms-3" onclick="stopTest()">
+                                <i class="fas fa-stop"></i> 暂停测试
+                            </button>
+                        `;
+                }
+                
+                // 进行当前session的对话
+                    const runId = `run_${Date.now()}_r${roundCount}_s${sessionNumber}`;
+                for (let round = 1; round <= sessionRounds; round++) {
+                    // 检查用户是否点击了暂停
+                    if (!isTestRunning) {
+                if (progressText) {
+                            progressText.innerHTML = `<i class="fas fa-stop-circle text-warning"></i> 用户暂停测试`;
+                        }
+                        sessionCompleted = true;
+                        break; // 退出session循环
+                }
+                
+                try {
+                    // 获取API密钥
+                    const apiKeys = getApiKeys();
+                        
+                        // 在第一轮，生成开场白；后续轮次使用上一轮AI回复
+                        let currentMessage;
+                        if (round === 1) {
+                            // 第一轮：使用Gemini生成开场白
+                            try {
+                                const openingResponse = await fetch('/api/generate-opening', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        child: child,
+                                        user_id: userId,
+                                        conversation_history: allConversations, // 使用所有历史对话
+                                        ...apiKeys
+                                    })
+                                });
+                                const openingResult = await openingResponse.json();
+                                currentMessage = openingResult.opening || "Hello!";
+                            } catch (error) {
+                                console.error('生成开场白失败，使用默认开场白:', error);
+                                currentMessage = "Hello!";
+                            }
+                        } else {
+                            // 后续轮次：使用上一轮AI回复作为输入，让Gemini生成孩子回应
+                            const lastConversation = sessionConversations[sessionConversations.length - 1];
+                            const aiResponse = lastConversation ? lastConversation.ai_response : "Hello!";
+                            
+                            // 使用Gemini生成孩子对AI回复的回应
+                            try {
+                                const childResponse = await fetch('/api/generate-child-response', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        child: child,
+                                        ai_response: aiResponse,
+                                        round_num: round,
+                                        conversation_history: sessionConversations,
+                                        ...apiKeys
+                                    })
+                                });
+                                const childResult = await childResponse.json();
+                                currentMessage = childResult.success ? childResult.child_response : "我想了解更多！";
+                            } catch (error) {
+                                console.error('生成孩子回应失败:', error);
+                                currentMessage = "我想了解更多！";
+                            }
+                        }
+                    
+                    // 获取自定义inputs配置
+                    const customInputs = getCustomInputs(userId, runId);
+                    
+                    // 调用单轮对话API
+                    const response = await fetch('/api/test-round', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            child: child,
+                            criteria: criteria,
+                            round_num: round,
+                            conversation_id: conversationId,
+                            message: currentMessage,
+                            conversation_history: sessionConversations,
+                            custom_inputs: customInputs,  // 使用自定义inputs配置
+                            ...apiKeys
+                        })
+                    });
+                    
+                    // 先检查HTTP状态码
+                    if (!response.ok) {
+                        // HTTP错误（包括500）
+                        const errorResult = await response.json();
+                            console.error(`Session ${sessionNumber} 第${round}轮HTTP错误:`, errorResult);
+                            alert(`❌ Session ${sessionNumber} 第${round}轮对话失败！\n\n${errorResult.message || '对话失败'}\n\n错误详情: ${errorResult.error || 'HTTP ' + response.status}`);
+                        
+                        // 隐藏加载状态
+                        document.querySelector('.loading').style.display = 'none';
+                        return; // 停止测试
+                    }
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        // 更新对话ID
+                        conversationId = result.conversation_id;
+                        
+                        // 🔥 额外验证：确保ai_response不为空且不是错误消息
+                        if (!result.ai_response || result.ai_response.trim() === '' || 
+                            result.ai_response.includes('连接失败') || 
+                            result.ai_response.includes('API失败')) {
+                                console.error(`Round ${roundCount} Session ${sessionNumber} 第${round}轮检测到无效的AI回复:`, result.ai_response);
+                                alert(`❌ Round ${roundCount} Session ${sessionNumber} 第${round}轮：AI回复无效或为空\n\n请检查Dify配置`);
+                            document.querySelector('.loading').style.display = 'none';
+                            return; // 停止测试
+                        }
+                        
+                        // 记录对话
+                        const conversation = {
+                            session: sessionNumber,
+                            round: result.round,
+                            user_message: result.user_message,
+                            ai_response: result.ai_response,
+                            timestamp: result.timestamp
+                        };
+                            sessionConversations.push(conversation);
+                        
+                        // 实时显示这一轮对话
+                        displaySingleRound(conversationContainer, conversation);
+                        
+                            // 更新进度显示
+                            if (progressText) {
+                                progressText.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Round ${roundCount} Session ${sessionNumber} - 第${round}/${sessionRounds}轮 [Round累计${roundTotalRounds}/${ROUNDS_PER_ROUND}]`;
+                            }
+                            
+                            // 添加延迟，让用户能看到实时效果
+                            await new Promise(resolve => setTimeout(resolve, 1000));
+                        } else {
+                            // Dify API失败，弹出错误并停止测试
+                            console.error(`Round ${roundCount} Session ${sessionNumber} 第${round}轮对话失败:`, result.message);
+                            alert(`❌ Round ${roundCount} Session ${sessionNumber} 第${round}轮对话失败！\n\n${result.message}\n\n错误详情: ${result.error || '未知错误'}`);
+                            
+                            // 隐藏加载状态
+                            document.querySelector('.loading').style.display = 'none';
+                            return; // 停止测试
+                        }
+                    } catch (error) {
+                        console.error(`Round ${roundCount} Session ${sessionNumber} 第${round}轮对话出错:`, error);
+                        alert(`❌ Round ${roundCount} Session ${sessionNumber} 第${round}轮网络错误！\n\n对话请求失败\n\n错误详情: ${error.message}`);
+                        
+                        // 隐藏加载状态
+                        document.querySelector('.loading').style.display = 'none';
+                        return; // 停止测试
+                    }
+                }
+                
+                    // Session完成，累计到当前Round
+                    roundConversations.push(...sessionConversations);
+                    allConversations.push(...sessionConversations);
+                    roundTotalRounds += sessionConversations.length;
+                    totalRounds += sessionConversations.length;
+                    
+                if (progressText) {
+                        progressText.innerHTML = `<i class="fas fa-check text-success"></i> Round ${roundCount} Session ${sessionNumber} 完成！(${sessionConversations.length}轮) [Round累计${roundTotalRounds}/${ROUNDS_PER_ROUND}轮]`;
+                    }
+                    
+                    // Session间短暂暂停
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                } // 结束session内循环
+                
+                // Round结束，立即进行评测
+                if (progressText) {
+                    progressText.innerHTML = `<i class="fas fa-chart-line text-info"></i> Round ${roundCount} 完成！共${roundConversations.length}轮对话，正在评测...`;
+                }
+                
+                // 对当前round进行评测
+                if (progressText) {
+                    if (isTestRunning) {
+                        progressText.innerHTML = `
+                            <i class="fas fa-spinner fa-spin text-primary"></i> Round ${roundCount} 完成(${roundConversations.length}轮)，正在调用Gemini评测API...
+                            <br><small class="text-warning">⏱️ 评测需要约3分钟，请耐心等待...</small>
+                            <button class="btn btn-sm btn-danger ms-3" onclick="stopTest()">
+                                <i class="fas fa-stop"></i> 暂停测试
+                            </button>
+                        `;
+                    } else {
+                        progressText.innerHTML = `<i class="fas fa-spinner fa-spin text-primary"></i> Round ${roundCount} 完成，正在评测... (用户已暂停)`;
+                    }
+                }
+                
+                console.log(`[评测开始] Round ${roundCount} 开始评测，时间: ${new Date().toLocaleTimeString()}`);
+                const evaluateStartTime = Date.now();
+                
+                try {
+                    const apiKeys = getApiKeys();
+                    const evaluateResponse = await fetch('/api/evaluate', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            child: child,
+                            conversation_history: roundConversations,
+                            criteria: criteria,
+                            ...apiKeys
+                        })
+                    });
+                    
+                    const evalResult = await evaluateResponse.json();
+                    
+                    const evaluateEndTime = Date.now();
+                    const evaluateDuration = ((evaluateEndTime - evaluateStartTime) / 1000).toFixed(1);
+                    console.log(`[评测完成] Round ${roundCount} 评测完成，耗时: ${evaluateDuration}秒，时间: ${new Date().toLocaleTimeString()}`);
+                    console.log(`[评测结果] success: ${evalResult.success}, scores:`, evalResult.scores);
+                    console.log(`[评测结果] 完整数据:`, evalResult);
+                    
+                    if (evalResult.success) {
+                        // 保存当前round的评测结果
+                        sessionResults.push({
+                            round: roundCount,
+                            rounds: roundConversations.length,
+                            scores: evalResult.scores,
+                            score_details: evalResult.score_details,
+                            reason: evalResult.reason,
+                            experience_score: evalResult.experience_score
+                        });
+                        
+                        // 🆕 异步保存Round评测结果到JSON（不等待）
+                        console.log(`[保存Round] Round ${roundCount} 评测成功，准备保存数据...`);
+                        console.log(`[保存Round] 评测数据: scores=${Object.keys(evalResult.scores || {}).length}项, conversations=${roundConversations.length}条`);
+                        
+                        const roundData = {
+                            test_id: currentTestId,
+                            child: child,
+                            round_number: roundCount,
+                            session_count: sessionNumber,
+                            conversations: roundConversations,
+                            scores: evalResult.scores || {},
+                            score_details: evalResult.score_details || {},
+                            reason: evalResult.reason || '',
+                            lessons: evalResult.lessons || '',
+                            character_review: evalResult.character_review || '',
+                            experience_score: evalResult.experience_score || 50,
+                            timestamp: new Date().toLocaleString('zh-CN')
+                        };
+                        
+                        console.log(`[保存Round] 开始调用saveRoundResult...`);
+                        saveRoundResult(roundData).then(() => {
+                            console.log(`[保存Round] ✅ Round ${roundCount} 保存完成`);
+                        }).catch((error) => {
+                            console.error(`[保存Round] ❌ Round ${roundCount} 保存失败:`, error);
+                        });
+                        
+                        // 获取评测结果容器
+                        const evaluationContainer = currentCard.querySelector('.evaluation-result-container');
+                        
+                        // 🆕 立即显示"评测完成，后台保存中..."
+                        if (evaluationContainer) {
+                            evaluationContainer.innerHTML = `
+                                <div class="text-center p-3">
+                                    <i class="fas fa-spinner fa-spin text-primary"></i>
+                                    <p class="text-muted mt-2">评测完成！后台保存中...</p>
+                                </div>
+                            `;
+                        }
+                        
+                        // 检查scores是否为空
+                        const scores = evalResult.scores || {};
+                        const scoreValues = Object.values(scores);
+                        
+                        if (scoreValues.length === 0) {
+                            console.warn(`[警告] Round ${roundCount} 评测结果为空！`);
+                            if (progressText) {
+                                progressText.innerHTML = `<i class="fas fa-exclamation-triangle text-warning"></i> Round ${roundCount} 评测结果为空`;
+                            }
+                        } else {
+                            const avgScore = scoreValues.reduce((sum, score) => sum + (typeof score === 'object' ? score.expert_score || score : score), 0) / scoreValues.length;
+                            
+                            // 在进度区域显示简要信息
+                            if (progressText) {
+                                progressText.innerHTML = `
+                                    <i class="fas fa-check-circle text-success"></i> Round ${roundCount} 评测完成！(耗时${evaluateDuration}秒) 平均分: ${avgScore.toFixed(2)}/10 | 共${roundConversations.length}轮对话
+                                    <br><small class="text-info">✅ 评测已完成，20秒后自动开始 Round ${roundCount + 1}...</small>
+                                `;
+                            }
+                            
+                            // 在评测结果区域显示完整详细信息
+                            if (evaluationContainer) {
+                                let resultHTML = `
+                                    <div class="alert alert-success mb-3">
+                                        <h5 class="alert-heading"><i class="fas fa-trophy"></i> Round ${roundCount} 评测完成</h5>
+                                        <hr>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <p><strong>平均分：</strong> <span class="badge bg-primary" style="font-size: 1.2em;">${avgScore.toFixed(2)}/10</span></p>
+                                                <p><strong>体验评分：</strong> <span class="badge bg-success" style="font-size: 1.2em;">${evalResult.experience_score || 'N/A'}/100</span></p>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <p><strong>对话轮数：</strong> ${roundConversations.length}轮</p>
+                                                <p><strong>评测耗时：</strong> ${evaluateDuration}秒</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="card mb-3">
+                                        <div class="card-header bg-info text-white">
+                                            <h6 class="mb-0"><i class="fas fa-star"></i> 详细评分</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                `;
+                                
+                                for (const [key, value] of Object.entries(scores)) {
+                                    const score = typeof value === 'object' ? value.expert_score : value;
+                                    const detail = typeof value === 'object' ? value.expert_detail : (evalResult.score_details && evalResult.score_details[key]) || '';
+                                    const colorClass = score >= 8 ? 'success' : score >= 6 ? 'warning' : 'danger';
+                                    
+                                    resultHTML += `
+                                        <div class="col-md-6 mb-3">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <strong>${key.substring(0, 50)}${key.length > 50 ? '...' : ''}</strong>
+                                                <span class="badge bg-${colorClass}">${score}/10</span>
+                                            </div>
+                                            ${detail ? `<small class="text-muted">${detail}</small>` : ''}
+                                        </div>
+                                    `;
+                                }
+                                
+                                resultHTML += `
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    ${evalResult.reason ? `
+                                    <div class="card mb-3">
+                                        <div class="card-header bg-primary text-white">
+                                            <h6 class="mb-0"><i class="fas fa-comment"></i> 总体评价</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <p style="white-space: pre-wrap;">${evalResult.reason}</p>
+                                        </div>
+                                    </div>
+                                    ` : ''}
+                                    
+                                    ${evalResult.lessons ? `
+                                    <div class="card mb-3">
+                                        <div class="card-header bg-warning text-dark">
+                                            <h6 class="mb-0"><i class="fas fa-lightbulb"></i> 改进建议</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <p style="white-space: pre-wrap;">${evalResult.lessons}</p>
+                                        </div>
+                                    </div>
+                                    ` : ''}
+                                    
+                                    ${evalResult.character_review ? `
+                                    <div class="card mb-3">
+                                        <div class="card-header bg-secondary text-white">
+                                            <h6 class="mb-0"><i class="fas fa-user-circle"></i> 角色自述</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <p style="white-space: pre-wrap;">${evalResult.character_review}</p>
+                                        </div>
+                                    </div>
+                                    ` : ''}
+                                `;
+                                
+                                evaluationContainer.innerHTML = resultHTML;
+                            }
+                        }
+                    } else {
+                        console.error(`Round ${roundCount} 评测失败:`, evalResult);
+                        if (progressText) {
+                            if (isTestRunning) {
+                                progressText.innerHTML = `
+                                    <i class="fas fa-exclamation-triangle text-warning"></i> Round ${roundCount} 评测失败 - 等待20秒后继续 Round ${roundCount + 1}
+                                    <button class="btn btn-sm btn-danger ms-3" onclick="stopTest()">
+                                        <i class="fas fa-stop"></i> 暂停测试
+                                    </button>
+                                `;
+                            } else {
+                                progressText.innerHTML = `<i class="fas fa-exclamation-triangle text-warning"></i> Round ${roundCount} 评测失败 - 用户已暂停`;
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error(`Round ${roundCount} 评测出错:`, error);
+                    if (progressText && isTestRunning) {
+                        progressText.innerHTML = `
+                            <i class="fas fa-exclamation-triangle text-danger"></i> Round ${roundCount} 评测出错 - 等待20秒后继续 Round ${roundCount + 1}
+                            <button class="btn btn-sm btn-danger ms-3" onclick="stopTest()">
+                                <i class="fas fa-stop"></i> 暂停测试
+                            </button>
+                        `;
+                    }
+                }
+                
+                // 检查用户是否暂停
+                if (!isTestRunning) {
+                    if (progressText) {
+                        progressText.innerHTML = `<i class="fas fa-stop-circle text-warning"></i> 用户暂停测试，已完成${roundCount}个Round，共${totalRounds}轮对话`;
+                    }
+                    break; // 用户暂停，结束测试
+                }
+                
+                // 等待20秒，评测结果会持续显示，不覆盖
+                console.log(`[等待开始] Round ${roundCount} 评测结果显示完毕，开始等待20秒后进入Round ${roundCount + 1}`);
+                
+                // 等待20秒后继续下一个round
+                // 注意：不在这里更新progressText，让评测结果持续显示
+                await new Promise(resolve => setTimeout(resolve, 20000));
+                console.log(`[等待结束] 20秒等待结束，准备开始 Round ${roundCount + 1}`);
+            }
+            
+            // 测试结束，显示最终汇总
+            if (progressText) {
+                progressText.innerHTML = `<i class="fas fa-trophy text-success"></i> 连续测试已停止！共完成${roundCount}个Round，总计${totalRounds}轮对话`;
+            }
+            
+            // 显示所有round的汇总结果
+            await displayMultiSessionResults(child, allConversations, roundCount, totalRounds, 'user_stopped', sessionResults);
+        }
+
+        // 获取当前选中的评分标准
+        function getSelectedCriteria() {
+            const criteria = {};
+            
+            // 收集内置评分标准（只收集启用的）
+            Object.entries(presetCriteria).forEach(([mainId, mainCriterion]) => {
+                const subCriteria = {};
+                let hasEnabledSubCriteria = false;
+                
+                Object.entries(mainCriterion.sub_criteria).forEach(([subId, subCriterion]) => {
+                    const subCriterionId = `${mainId}.${subId}`;
+                    const checkbox = document.getElementById(`checkbox-${mainId}-${subId}`);
+                    
+                    // 只收集启用的子指标
+                    if (checkbox && checkbox.checked && addedCriteriaIds.has(subCriterionId)) {
+                        subCriteria[subCriterion.name] = subCriterion.prompt;
+                        hasEnabledSubCriteria = true;
+                    }
+                });
+                
+                // 如果有启用的子指标，添加一级指标
+                if (hasEnabledSubCriteria) {
+                    criteria[mainCriterion.name] = {
+                        name: mainCriterion.name,
+                        description: mainCriterion.description,
+                        weight: mainCriterion.weight,
+                        sub_criteria: subCriteria
+                    };
+                }
+            });
+            
+            // 收集自定义评分标准
+            document.querySelectorAll('.criteria-item').forEach((item, index) => {
+                const criterionId = item.getAttribute('data-criterion-id');
+                
+                // 只处理自定义标准（没有data-criterion-id或不是内置标准）
+                if (!criterionId || !criterionId.includes('.')) {
+                    const nameInput = item.querySelector('input[type="text"]');
+                    const textarea = item.querySelector('textarea');
+                    const criteriaName = nameInput ? nameInput.value.trim() : `自定义标准${index + 1}`;
+                    
+                    if (criteriaName && textarea && textarea.value.trim()) {
+                        criteria[criteriaName] = textarea.value.trim();
+                    }
+                }
+            });
+            
+            return criteria;
+        }
+
+        // 显示多Session测试的最终结果（使用与正常测试相同的显示逻辑）
+        function displayMultiSessionFinalResults(container, result) {
+            const scores = result.scores || {};
+            const scoreDetails = result.score_details || {};
+            
+            // 检查是否有评分指标
+            if (Object.keys(scores).length === 0) {
+                const noScoresHtml = `
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>没有评分结果</strong><br>
+                        ${result.reason || '没有启用的评分指标，本次测试仅进行对话，未进行评分。'}
+                    </div>
+                `;
+                container.innerHTML = noScoresHtml;
+                return;
+            }
+            
+            // 按一级指标分组显示
+            const mainCriteriaGroups = {};
+            Object.keys(scores).forEach(key => {
+                if (key.includes('.')) {
+                    const [mainKey, subKey] = key.split('.');
+                    if (!mainCriteriaGroups[mainKey]) {
+                        mainCriteriaGroups[mainKey] = [];
+                    }
+                    mainCriteriaGroups[mainKey].push({ key, subKey, score: scores[key], detail: scoreDetails[key] });
+                }
+            });
+            
+            // 生成一级指标卡片
+            const mainCriteriaHtml = Object.entries(mainCriteriaGroups).map(([mainKey, subCriteria], index) => {
+                // 计算一级指标平均分
+                const avgChildScore = subCriteria.reduce((sum, item) => sum + (item.score.child_score || item.score), 0) / subCriteria.length;
+                const avgExpertScore = subCriteria.reduce((sum, item) => sum + (item.score.expert_score || item.score), 0) / subCriteria.length;
+                
+                const colors = ['primary', 'success', 'warning', 'info', 'danger', 'secondary', 'dark'];
+                const color = colors[index % colors.length];
+                
+                return `
+                    <div class="card mb-3 main-criteria-card">
+                        <div class="card-header bg-${color} text-white d-flex justify-content-between align-items-center" onclick="toggleMainCriteriaResults('${mainKey}')" style="cursor: pointer;">
+                            <div>
+                                <h6 class="mb-0">
+                                    <i class="fas fa-chevron-down" id="chevron-result-${mainKey}"></i>
+                                    ${mainKey.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                </h6>
+                                <small class="opacity-75">${subCriteria.length} 个二级指标</small>
+                            </div>
+                            <div class="text-end">
+                                <div class="d-flex gap-2">
+                                    <span class="badge bg-light text-dark">
+                                        <i class="fas fa-child"></i> 孩子: ${avgChildScore.toFixed(1)}分
+                                    </span>
+                                    <span class="badge bg-light text-dark">
+                                        <i class="fas fa-user-tie"></i> 专家: ${avgExpertScore.toFixed(1)}分
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body" id="sub-criteria-results-${mainKey}" style="display: none;">
+                            ${subCriteria.map(item => {
+                                const childScore = item.score.child_score || item.score;
+                                const expertScore = item.score.expert_score || item.score;
+                                const childDetail = item.detail.child_detail || item.detail;
+                                const expertDetail = item.detail.expert_detail || item.detail;
+                                
+                                return `
+                                    <div class="card mb-2 border-secondary">
+                                        <div class="card-header bg-light">
+                                            <h6 class="mb-0">${item.subKey.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="d-flex align-items-center mb-2">
+                                                        <i class="fas fa-child text-primary me-2"></i>
+                                                        <strong>孩子评分: ${childScore}分</strong>
+                                                    </div>
+                                                    <div class="small text-muted" style="white-space: pre-wrap;">${childDetail}</div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="d-flex align-items-center mb-2">
+                                                        <i class="fas fa-user-tie text-success me-2"></i>
+                                                        <strong>专家评分: ${expertScore}分</strong>
+                                                    </div>
+                                                    <div class="small text-muted" style="white-space: pre-wrap;">${expertDetail}</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            // 格式化经验教训（保留换行和列表格式）
+            let lessonsText = result.lessons || '无';
+            if (typeof lessonsText === 'string') {
+                lessonsText = lessonsText.replace(/\n/g, '<br>');
+            }
+            
+            // 格式化角色评价
+            let characterReviewText = result.character_review || '无';
+            if (typeof characterReviewText === 'string') {
+                characterReviewText = characterReviewText.replace(/\n/g, '<br>');
+            }
+            
+            // 根据结束原因显示不同的标题
+            let endReasonText = '';
+            switch (result.end_reason) {
+                case 'max_rounds_reached':
+                    endReasonText = '因达到轮数上限而结束';
+                    break;
+                case 'insufficient_rounds':
+                    endReasonText = '因剩余轮数不足而结束';
+                    break;
+                default:
+                    endReasonText = '正常完成';
+            }
+            
+            const finalHtml = `
+                <div class="mt-4">
+                    <div class="card mb-3">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-chart-line"></i> 多Session评测结果 (${endReasonText})
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6><i class="fas fa-info-circle"></i> 测试统计</h6>
+                                    <ul class="list-unstyled">
+                                        <li><i class="fas fa-calendar"></i> 总Session数：${result.session_count}</li>
+                                        <li><i class="fas fa-comments"></i> 总对话轮数：${result.total_rounds}</li>
+                                        <li><i class="fas fa-child"></i> 测试角色：${result.child} (${result.age}岁)</li>
+                                        <li><i class="fas fa-clock"></i> 完成时间：${result.timestamp}</li>
+                                        <li><i class="fas fa-info-circle"></i> 结束原因：${endReasonText}</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6><i class="fas fa-star"></i> 整体评分</h6>
+                                    <div class="text-center">
+                                        <div class="display-6 text-primary">${result.experience_score || 50}</div>
+                                        <small class="text-muted">体验评分 (0-100)</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    ${mainCriteriaHtml}
+                    
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-success text-white">
+                                    <h6 class="mb-0"><i class="fas fa-lightbulb"></i> 改进建议</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="small">${lessonsText}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-info text-white">
+                                    <h6 class="mb-0"><i class="fas fa-user-circle"></i> 角色评价</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="small">${characterReviewText}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            container.innerHTML = finalHtml;
+        }
+
+        // 显示多Session测试结果
+        async function displayMultiSessionResults(child, allConversations, sessionCount, totalRounds, endReason = 'normal') {
+            try {
+                // 获取API密钥
+                const apiKeys = getApiKeys();
+                
+                // 构建对话文本
+                const conversationText = allConversations.map(conv => 
+                    `Round ${conv.round}: Child: ${conv.user_message} | AI: ${conv.ai_response}`
+                ).join('\n');
+                
+                // 显示评分进度
+                const container = document.querySelector('.conversation-container');
+                if (container) {
+                    container.innerHTML = `
+                        <div class="text-center p-4">
+                            <i class="fas fa-spinner fa-spin fa-2x text-primary mb-3"></i>
+                            <h5>正在进行多Session评测...</h5>
+                            <p class="text-muted">正在分析 ${sessionCount} 个session，共 ${totalRounds} 轮对话</p>
+                        </div>
+                    `;
+                }
+                
+                // 调用评测API
+                const response = await fetch('/api/evaluate', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        child: child,
+                        conversation_history: allConversations,
+                        criteria: getSelectedCriteria(),
+                        gemini_api_key: apiKeys.gemini_api_key
+                                    })
+                                });
+                                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // 构建完整的结果对象
+                    const fullResult = {
+                        child: child.name,
+                        age: child.age,
+                        traits: child.traits,
+                        conversation_log: allConversations,
+                        scores: result.scores || {},
+                        score_details: result.score_details || {},
+                        reason: result.reason || "评分完成",
+                        lessons: result.lessons || "暂无经验教训",
+                        character_review: result.character_review || "",
+                        experience_score: result.experience_score || 50,
+                        timestamp: new Date().toLocaleString(),
+                        // 多Session特有信息
+                        session_count: sessionCount,
+                        total_rounds: totalRounds,
+                        end_reason: endReason
+                    };
+                    
+                    // 使用与正常测试相同的显示逻辑
+                    displayMultiSessionFinalResults(container, fullResult);
+                    
+                    // 保存结果
+                    await saveMultiSessionResult(child, allConversations, result, sessionCount, totalRounds, endReason);
+                    
+                                } else {
+                    console.error('评测失败:', result.message);
+                    alert(`❌ 评测失败！\n\n${result.message}`);
+                                }
+                
+                            } catch (error) {
+                console.error('显示评测结果出错:', error);
+                alert(`❌ 显示评测结果失败！\n\n${error.message}`);
+            }
+        }
+
+        // 保存多Session测试结果
+        async function saveMultiSessionResult(child, conversations, evaluationResult, sessionCount, totalRounds, endReason = 'normal') {
+            try {
+                const response = await fetch('/api/save-result', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        child: child,
+                        criteria: {}, // 使用默认标准
+                        conversations: conversations,
+                        scores: evaluationResult.scores || {},
+                        reason: evaluationResult.character_review || '',
+                        lessons: evaluationResult.lessons || '',
+                        character_review: evaluationResult.character_review || '',
+                        experience_score: evaluationResult.experience_score || 50,
+                        session_count: sessionCount,
+                        total_rounds: totalRounds,
+                        end_reason: endReason,
+                        test_type: 'multi_session',
+                        timestamp: new Date().toLocaleString('zh-CN', {
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit'
+                        })
+                    })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    console.log('✅ 多Session测试结果已保存');
+                } else {
+                    console.error('保存失败:', result.message);
+                    }
+                } catch (error) {
+                console.error('保存多Session测试结果出错:', error);
+            }
+        }
+
+        // 显示单轮对话
+        function displaySingleRound(container, conversation) {
+            const sessionInfo = conversation.session ? `Session ${conversation.session} - ` : '';
+            const roundHtml = `
+                <div class="conversation-round mb-3 p-3 rounded" style="background-color: white; border-left: 4px solid #007bff;">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <strong>${sessionInfo}第${conversation.round}轮</strong>
+                        <small class="text-muted">${conversation.timestamp}</small>
+                    </div>
+                    <div class="mb-2">
+                        <strong>孩子：</strong><span class="text-primary">${conversation.user_message}</span>
+                    </div>
+                    <div>
+                        <strong>AI：</strong><span class="text-success">${conversation.ai_response}</span>
+                    </div>
+                </div>
+            `;
+            
+            container.insertAdjacentHTML('beforeend', roundHtml);
+            
+            // 滚动到最新内容
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // 执行最终评分
+        async function performFinalEvaluation(child, criteria, conversationLog, conversationContainer, progressText) {
+            // 显示评分中状态
+            if (progressText) {
+                progressText.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 正在进行最终评分...';
+            }
+            
+            try {
+                // 获取API密钥
+                const apiKeys = getApiKeys();
+                
+                // 调用后端评分API
+                const response = await fetch('/api/evaluate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        child: child,
+                        conversation_history: conversationLog,
+                        criteria: criteria,
+                        ...apiKeys
+                    })
+                });
+                
+                const evalResult = await response.json();
+                
+                const result = {
+                    child: child.name,
+                    age: child.age,
+                    traits: child.traits,
+                    conversation_log: conversationLog,
+                    scores: evalResult.scores || {},
+                    score_details: evalResult.score_details || {},
+                    reason: evalResult.reason || "评分完成",
+                    lessons: evalResult.lessons || "暂无经验教训",
+                    character_review: evalResult.character_review || "",
+                    experience_score: evalResult.experience_score || 50,
+                    timestamp: new Date().toLocaleString()
+                };
+                
+                // 显示最终结果
+                displayFinalResults(conversationContainer, result, progressText);
+                
+                // 保存到CSV
+                await saveResultToCSV(child, criteria, conversationLog, evalResult.scores, evalResult.reason, evalResult.lessons, evalResult.character_review, evalResult.experience_score);
+                
+            } catch (error) {
+                console.error('评分过程出错:', error);
+                // 如果评分失败，仍然显示对话记录
+                const result = {
+                    child: child.name,
+                    age: child.age,
+                    traits: child.traits,
+                    conversation_log: conversationLog,
+                    scores: {},
+                    score_details: {},
+                    reason: "评分过程出错：" + error.message,
+                    lessons: "评分失败，无法生成经验教训",
+                    character_review: "",
+                    experience_score: 50,
+                    timestamp: new Date().toLocaleString()
+                };
+                displayFinalResults(conversationContainer, result, progressText);
+                
+                // 即使评分失败，也保存对话记录到CSV
+                await saveResultToCSV(child, criteria, conversationLog, {}, "评分过程出错：" + error.message, "", "", 50);
+            }
+        }
+
+        // 显示最终结果
+        function displayFinalResults(container, result, progressText) {
+            const scores = result.scores || {};
+            const scoreDetails = result.score_details || {};
+            
+            // 检查是否有评分指标
+            if (Object.keys(scores).length === 0) {
+                const noScoresHtml = `
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>没有评分结果</strong><br>
+                        ${result.reason || '没有启用的评分指标，本次测试仅进行对话，未进行评分。'}
+                    </div>
+                `;
+                container.innerHTML = noScoresHtml;
+                return;
+            }
+            
+            // 按一级指标分组显示
+            const mainCriteriaGroups = {};
+            Object.keys(scores).forEach(key => {
+                if (key.includes('.')) {
+                    const [mainKey, subKey] = key.split('.');
+                    if (!mainCriteriaGroups[mainKey]) {
+                        mainCriteriaGroups[mainKey] = [];
+                    }
+                    mainCriteriaGroups[mainKey].push({ key, subKey, score: scores[key], detail: scoreDetails[key] });
+                }
+            });
+            
+            // 生成一级指标卡片
+            const mainCriteriaHtml = Object.entries(mainCriteriaGroups).map(([mainKey, subCriteria], index) => {
+                // 计算一级指标平均分
+                const avgChildScore = subCriteria.reduce((sum, item) => sum + (item.score.child_score || item.score), 0) / subCriteria.length;
+                const avgExpertScore = subCriteria.reduce((sum, item) => sum + (item.score.expert_score || item.score), 0) / subCriteria.length;
+                
+                const colors = ['primary', 'success', 'warning', 'info', 'danger', 'secondary', 'dark'];
+                const color = colors[index % colors.length];
+                
+                return `
+                    <div class="card mb-3 main-criteria-card">
+                        <div class="card-header bg-${color} text-white d-flex justify-content-between align-items-center" onclick="toggleMainCriteriaResults('${mainKey}')" style="cursor: pointer;">
+                            <div>
+                                <h6 class="mb-0">
+                                    <i class="fas fa-chevron-down" id="chevron-result-${mainKey}"></i>
+                                    ${mainKey.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                </h6>
+                                <small class="opacity-75">${subCriteria.length} 个二级指标</small>
+                            </div>
+                            <div class="text-end">
+                                <div class="d-flex gap-2">
+                                    <span class="badge bg-light text-dark">
+                                        <i class="fas fa-child"></i> 孩子: ${avgChildScore.toFixed(1)}分
+                            </span>
+                                    <span class="badge bg-light text-dark">
+                                        <i class="fas fa-user-tie"></i> 专家: ${avgExpertScore.toFixed(1)}分
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body" id="sub-criteria-results-${mainKey}" style="display: none;">
+                            ${subCriteria.map(item => {
+                                const childScore = item.score.child_score || item.score;
+                                const expertScore = item.score.expert_score || item.score;
+                                const childDetail = item.detail.child_detail || item.detail;
+                                const expertDetail = item.detail.expert_detail || item.detail;
+                                
+                                return `
+                                    <div class="card mb-2 border-secondary">
+                                        <div class="card-header bg-light">
+                                            <h6 class="mb-0">${item.subKey.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</h6>
+                        </div>
+                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="d-flex align-items-center mb-2">
+                                                        <i class="fas fa-child text-primary me-2"></i>
+                                                        <strong>孩子评分: ${childScore}分</strong>
+                                                    </div>
+                                                    <div class="small text-muted" style="white-space: pre-wrap;">${childDetail}</div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="d-flex align-items-center mb-2">
+                                                        <i class="fas fa-user-tie text-success me-2"></i>
+                                                        <strong>专家评分: ${expertScore}分</strong>
+                                                    </div>
+                                                    <div class="small text-muted" style="white-space: pre-wrap;">${expertDetail}</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            // 格式化经验教训（保留换行和列表格式）
+            // 确保lessons是字符串类型
+            let lessonsText = result.lessons || '无';
+            if (typeof lessonsText !== 'string') {
+                lessonsText = JSON.stringify(lessonsText) || '无';
+            }
+            const lessonsFormatted = lessonsText.replace(/\n/g, '<br>');
+            
+            // 确保reason也是字符串
+            let reasonText = result.reason || '无';
+            if (typeof reasonText !== 'string') {
+                reasonText = String(reasonText) || '无';
+            }
+            
+            // 确保character_review也是字符串
+            let characterReviewText = result.character_review || '';
+            if (typeof characterReviewText !== 'string') {
+                characterReviewText = String(characterReviewText) || '';
+            }
+            const characterReviewFormatted = characterReviewText.replace(/\n/g, '<br>');
+            
+            // 只有当有角色自述时才显示角色自述卡片
+            const characterReviewHtml = characterReviewText ? `
+                <div class="card border-success mb-2">
+                    <div class="card-header bg-success text-white">
+                        <i class="fas fa-child"></i> 角色自述（${result.child}的感受）
+                    </div>
+                    <div class="card-body" style="background-color: #f0f8ff;">
+                        <small style="white-space: pre-wrap; font-style: italic;">"${characterReviewFormatted}"</small>
+                    </div>
+                </div>
+            ` : '';
+            
+            // 体验评分显示（使用 ?? 避免 0 被当作 falsy 值）
+            const experienceScore = result.experience_score ?? 50;
+            let experienceColor = 'secondary';
+            let experienceIcon = 'meh';
+            let experienceText = '一般';
+            
+            if (experienceScore >= 90) {
+                experienceColor = 'success';
+                experienceIcon = 'grin-stars';
+                experienceText = '超级开心';
+            } else if (experienceScore >= 70) {
+                experienceColor = 'primary';
+                experienceIcon = 'smile';
+                experienceText = '挺好的';
+            } else if (experienceScore >= 50) {
+                experienceColor = 'info';
+                experienceIcon = 'meh';
+                experienceText = '还行吧';
+            } else if (experienceScore >= 30) {
+                experienceColor = 'warning';
+                experienceIcon = 'frown';
+                experienceText = '有点无聊';
+            } else {
+                experienceColor = 'danger';
+                experienceIcon = 'sad-tear';
+                experienceText = '很不喜欢';
+            }
+            
+            const experienceScoreHtml = `
+                <div class="card border-${experienceColor} mb-2">
+                    <div class="card-header bg-${experienceColor} text-white">
+                        <i class="fas fa-heart"></i> 角色体验评分
+                    </div>
+                    <div class="card-body text-center">
+                        <h2 class="text-${experienceColor} mb-2">
+                            <i class="fas fa-${experienceIcon}"></i> ${experienceScore} <small>/ 100</small>
+                        </h2>
+                        <p class="mb-0"><strong>${experienceText}</strong></p>
+                        <small class="text-muted">孩子视角的整体体验评分</small>
+                    </div>
+                </div>
+            `;
+            
+            const finalHtml = `
+                <div class="mt-4">
+                    <h6 class="mb-3"><i class="fas fa-star"></i> 📊 详细评分结果</h6>
+                    ${mainCriteriaHtml}
+                    
+                    <div class="card mb-2 border-info">
+                        <div class="card-header bg-info text-white">
+                            <i class="fas fa-lightbulb"></i> 总体评价
+                        </div>
+                        <div class="card-body">
+                            <small style="white-space: pre-wrap;">${reasonText}</small>
+                        </div>
+                    </div>
+                    
+                    <div class="card border-warning mb-2">
+                        <div class="card-header bg-warning text-dark">
+                            <i class="fas fa-book"></i> 经验教训
+                        </div>
+                        <div class="card-body">
+                            <small style="white-space: pre-wrap;">${lessonsFormatted}</small>
+                                </div>
+                    </div>
+                    
+                    ${characterReviewHtml}
+                    ${experienceScoreHtml}
+                </div>
+            `;
+            
+            container.insertAdjacentHTML('beforeend', finalHtml);
+            
+            // 更新进度文本
+            if (progressText) {
+                progressText.innerHTML = '<i class="fas fa-check-circle"></i> 测试完成！';
+            }
+        }
+
+        // 保存结果到CSV
+        async function saveResultToCSV(child, criteria, conversationLog, scores, reason, lessons, character_review, experience_score) {
+            try {
+                const response = await fetch('/api/save-result', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        child: child,
+                        criteria: criteria,
+                        conversations: conversationLog,
+                        scores: scores || {},
+                        reason: reason || '',
+                        lessons: lessons || '',
+                        character_review: character_review || '',
+                        experience_score: experience_score || 50,
+                        timestamp: new Date().toLocaleString('zh-CN', {
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit'
+                        })
+                    })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    console.log('✅ 测试结果已保存到CSV');
+                } else {
+                    console.error('❌ 保存CSV失败:', result.message);
+                }
+            } catch (error) {
+                console.error('❌ 保存CSV出错:', error);
+            }
+        }
+
+        // 显示实时进度
+        function showRealTimeProgress(children) {
+            const container = document.getElementById('results-container');
+            const maxRounds = getRounds();
+            let html = '<div class="row">';
+            
+            children.forEach((child, index) => {
+                html += `
+                    <div class="col-md-12 mb-4">
+                        <div class="card result-card">
+                            <div class="card-header">
+                                <h5><i class="fas fa-child"></i> ${child.name} (${child.age}岁) - 总轮数上限: ${maxRounds}</h5>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>性格特点：</strong>${child.traits}</p>
+                                <hr>
+                                <h6><i class="fas fa-comments"></i> 对话记录：</h6>
+                                <div class="progress-text text-center text-primary mb-3">
+                                    <i class="fas fa-spinner fa-spin"></i> 准备开始对话测试...
+                                </div>
+                                <div class="conversation-container" style="max-height: 400px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 5px; padding: 15px; background-color: #f8f9fa;">
+                                    <div class="text-center text-muted">
+                                        <p>等待对话开始...</p>
+                                    </div>
+                                </div>
+                                <hr>
+                                <h6><i class="fas fa-chart-bar"></i> 评测结果：</h6>
+                                <div class="evaluation-result-container" style="border: 1px solid #dee2e6; border-radius: 5px; padding: 15px; background-color: #ffffff; min-height: 100px;">
+                                    <div class="text-center text-muted">
+                                        <p><i class="fas fa-clock"></i> 等待评测完成...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        // 存储当前结果
+        let currentResults = [];
+
+        // 显示结果
+        function displayResults(results) {
+            currentResults = results; // 保存结果
+            const container = document.getElementById('results-container');
+            const maxRounds = getRounds();
+            let html = '<div class="row">';
+            
+            results.forEach((result, index) => {
+                const scores = result.scores || {};
+                const scoreKeys = Object.keys(scores);
+                const conversationLog = result.conversation_log || [];
+                
+                html += `
+                    <div class="col-md-12 mb-4">
+                        <div class="card result-card">
+                            <div class="card-header">
+                                <h5><i class="fas fa-child"></i> ${result.child} (${result.age}岁) - 总轮数上限: ${maxRounds}</h5>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>性格特点：</strong>${result.traits}</p>
+                                <hr>
+                                <h6><i class="fas fa-comments"></i> 对话记录：</h6>
+                                <div class="conversation-container" style="max-height: 400px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 5px; padding: 15px; background-color: #f8f9fa;">
+                `;
+                
+                // 显示每轮对话
+                conversationLog.forEach((conversation, roundIndex) => {
+                    html += `
+                        <div class="conversation-round mb-3 p-3 rounded" style="background-color: white; border-left: 4px solid #007bff;">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <strong>第${conversation.round}轮</strong>
+                                <small class="text-muted">${conversation.timestamp}</small>
+                            </div>
+                            <div class="mb-2">
+                                <strong>孩子：</strong><span class="text-primary">${conversation.user_message}</span>
+                            </div>
+                            <div>
+                                <strong>AI：</strong><span class="text-success">${conversation.ai_response}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += `
+                                </div>
+                                <hr>
+                                <div class="row text-center">
+                `;
+                
+                // 动态显示评分
+                scoreKeys.forEach((key, i) => {
+                    const colors = ['bg-primary', 'bg-success', 'bg-warning', 'bg-info', 'bg-danger', 'bg-secondary'];
+                    const color = colors[i % colors.length];
+                    html += `
+                        <div class="col-${Math.floor(12 / scoreKeys.length)}">
+                            <span class="badge ${color} score-badge">${key}: ${scores[key] || 0}</span>
+                        </div>
+                    `;
+                });
+                
+                html += `
+                                </div>
+                                <p class="mt-2"><small class="text-muted">${result.reason}</small></p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        // 清空结果
+        function clearResults() {
+            if (confirm('确定要清空所有结果吗？')) {
+                currentResults = [];
+                document.getElementById('results-container').innerHTML = `
+                    <div class="text-center text-muted">
+                        <i class="fas fa-clipboard-list fa-3x mb-3"></i>
+                        <p>配置测试角色和评分标准，然后点击"开始测试"</p>
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

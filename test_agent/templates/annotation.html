@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>专家评分标注训练平台</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .annotation-card {
+            border-left: 4px solid #007bff;
+            margin-bottom: 20px;
+        }
+        .score-comparison {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .expert-analysis {
+            background: #e3f2fd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .child-analysis {
+            background: #fff3e0;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .annotation-form {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .rating-slider {
+            margin: 10px 0;
+        }
+        .feedback-textarea {
+            min-height: 120px;
+        }
+        .annotation-stats {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .analysis-content {
+            min-height: 60px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 6px;
+            border-left: 3px solid #007bff;
+        }
+        .expert-analysis .analysis-content {
+            border-left-color: #28a745;
+        }
+        .child-analysis .analysis-content {
+            border-left-color: #ffc107;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- 侧边栏 -->
+            <div class="col-md-3">
+                <div class="annotation-stats">
+                    <h5><i class="fas fa-chart-bar"></i> 标注统计</h5>
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h6 id="total-annotations">0</h6>
+                            <small>总标注数</small>
+                        </div>
+                        <div class="col-6">
+                            <h6 id="avg-agreement">0%</h6>
+                            <small>平均一致性</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h6><i class="fas fa-filter"></i> 筛选条件</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">测试类型</label>
+                            <select class="form-select" id="test-type-filter">
+                                <option value="">全部</option>
+                                <option value="normal">正常测试</option>
+                                <option value="continuous">连续测试</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">评分范围</label>
+                            <select class="form-select" id="score-range-filter">
+                                <option value="">全部</option>
+                                <option value="1-3">1-3分</option>
+                                <option value="4-6">4-6分</option>
+                                <option value="7-10">7-10分</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">一致性</label>
+                            <select class="form-select" id="agreement-filter">
+                                <option value="">全部</option>
+                                <option value="high">高一致性(>80%)</option>
+                                <option value="medium">中等一致性(60-80%)</option>
+                                <option value="low">低一致性(<60%)</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary btn-sm w-100" onclick="loadAnnotations()">
+                            <i class="fas fa-search"></i> 筛选
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 主内容区 -->
+            <div class="col-md-9">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2><i class="fas fa-edit"></i> 专家评分标注训练</h2>
+                    <div>
+                        <button class="btn btn-success" onclick="exportAnnotations()">
+                            <i class="fas fa-download"></i> 导出标注数据
+                        </button>
+                        <button class="btn btn-warning" onclick="trainModel()">
+                            <i class="fas fa-brain"></i> 训练模型
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 标注列表 -->
+                <div id="annotation-list">
+                    <!-- 动态加载标注项目 -->
+                </div>
+
+                <!-- 分页 -->
+                <nav aria-label="标注分页">
+                    <ul class="pagination justify-content-center" id="pagination">
+                        <!-- 动态生成分页 -->
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <!-- 标注模态框 -->
+    <div class="modal fade" id="annotationModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">标注专家评分</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="annotation-content">
+                        <!-- 动态加载标注内容 -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="saveAnnotation()">保存标注</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentAnnotations = [];
+        let currentPage = 1;
+        const pageSize = 10;
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAnnotations();
+        });
+
+        // 加载标注数据
+        async function loadAnnotations() {
+            try {
+                const response = await fetch('/api/annotations');
+                const data = await response.json();
+                currentAnnotations = data.annotations || [];
+                renderAnnotations();
+                updateStats();
+            } catch (error) {
+                console.error('加载标注数据失败:', error);
+            }
+        }
+
+        // 渲染标注列表
+        function renderAnnotations() {
+            const container = document.getElementById('annotation-list');
+            const startIndex = (currentPage - 1) * pageSize;
+            const endIndex = startIndex + pageSize;
+            const pageAnnotations = currentAnnotations.slice(startIndex, endIndex);
+
+            container.innerHTML = pageAnnotations.map(annotation => `
+                <div class="card annotation-card">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <h6>测试ID: ${annotation.test_id}</h6>
+                                <p class="text-muted">${annotation.timestamp}</p>
+                                
+                                <div class="score-comparison">
+                                    <h6>评分对比</h6>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <strong>孩子评分:</strong> ${annotation.child_score}/10
+                                        </div>
+                                        <div class="col-md-6">
+                                            <strong>专家评分:</strong> ${annotation.expert_score}/10
+                                        </div>
+                                    </div>
+                                    <div class="mt-2">
+                                        <strong>一致性:</strong> 
+                                        <span class="badge ${getAgreementBadgeClass(annotation.agreement)}">
+                                            ${annotation.agreement}%
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="expert-analysis">
+                                    <h6><i class="fas fa-user-tie"></i> 专家分析</h6>
+                                    <div class="analysis-content">
+                                        ${annotation.expert_analysis ? `<p>${annotation.expert_analysis}</p>` : '<p class="text-muted">暂无专家分析内容</p>'}
+                                    </div>
+                                </div>
+
+                                <div class="child-analysis">
+                                    <h6><i class="fas fa-child"></i> 孩子分析</h6>
+                                    <div class="analysis-content">
+                                        ${annotation.child_analysis ? `<p>${annotation.child_analysis}</p>` : '<p class="text-muted">暂无孩子分析内容</p>'}
+                                    </div>
+                                </div>
+
+                                <!-- 调试信息 -->
+                                <div class="mt-3">
+                                    <button class="btn btn-sm btn-outline-info" type="button" data-bs-toggle="collapse" data-bs-target="#debug-${annotation.id}" aria-expanded="false">
+                                        <i class="fas fa-bug"></i> 调试信息
+                                    </button>
+                                    <div class="collapse mt-2" id="debug-${annotation.id}">
+                                        <div class="card card-body">
+                                            <h6>原始数据:</h6>
+                                            <pre class="small">${JSON.stringify(annotation, null, 2)}</pre>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="annotation-form">
+                                    <h6>标注反馈</h6>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">专家评分准确性</label>
+                                        <div class="rating-slider">
+                                            <input type="range" class="form-range" min="1" max="10" 
+                                                   value="${annotation.expert_accuracy || 5}" 
+                                                   id="expert-accuracy-${annotation.id}">
+                                            <div class="d-flex justify-content-between">
+                                                <small>1分 (不准确)</small>
+                                                <small>10分 (非常准确)</small>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">专家分析质量</label>
+                                        <div class="rating-slider">
+                                            <input type="range" class="form-range" min="1" max="10" 
+                                                   value="${annotation.expert_quality || 5}" 
+                                                   id="expert-quality-${annotation.id}">
+                                            <div class="d-flex justify-content-between">
+                                                <small>1分 (质量差)</small>
+                                                <small>10分 (质量高)</small>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">建议的专家评分</label>
+                                        <input type="number" class="form-control" min="1" max="10" 
+                                               value="${annotation.suggested_score || annotation.expert_score}" 
+                                               id="suggested-score-${annotation.id}">
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">改进建议</label>
+                                        <textarea class="form-control feedback-textarea" 
+                                                  placeholder="请提供具体的改进建议..." 
+                                                  id="feedback-${annotation.id}">${annotation.feedback || ''}</textarea>
+                                    </div>
+
+                                    <button class="btn btn-primary btn-sm w-100" 
+                                            onclick="openAnnotationModal(${annotation.id})">
+                                        <i class="fas fa-edit"></i> 详细标注
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            renderPagination();
+        }
+
+        // 获取一致性徽章样式
+        function getAgreementBadgeClass(agreement) {
+            if (agreement >= 80) return 'bg-success';
+            if (agreement >= 60) return 'bg-warning';
+            return 'bg-danger';
+        }
+
+        // 渲染分页
+        function renderPagination() {
+            const totalPages = Math.ceil(currentAnnotations.length / pageSize);
+            const pagination = document.getElementById('pagination');
+            
+            if (totalPages <= 1) {
+                pagination.innerHTML = '';
+                return;
+            }
+
+            let paginationHTML = '';
+            
+            // 上一页
+            paginationHTML += `
+                <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="changePage(${currentPage - 1})">上一页</a>
+                </li>
+            `;
+
+            // 页码
+            for (let i = 1; i <= totalPages; i++) {
+                paginationHTML += `
+                    <li class="page-item ${i === currentPage ? 'active' : ''}">
+                        <a class="page-link" href="#" onclick="changePage(${i})">${i}</a>
+                    </li>
+                `;
+            }
+
+            // 下一页
+            paginationHTML += `
+                <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                    <a class="page-link" href="#" href="#" onclick="changePage(${currentPage + 1})">下一页</a>
+                </li>
+            `;
+
+            pagination.innerHTML = paginationHTML;
+        }
+
+        // 切换页面
+        function changePage(page) {
+            if (page < 1 || page > Math.ceil(currentAnnotations.length / pageSize)) return;
+            currentPage = page;
+            renderAnnotations();
+        }
+
+        // 更新统计信息
+        function updateStats() {
+            document.getElementById('total-annotations').textContent = currentAnnotations.length;
+            
+            const avgAgreement = currentAnnotations.length > 0 
+                ? Math.round(currentAnnotations.reduce((sum, a) => sum + (a.agreement || 0), 0) / currentAnnotations.length)
+                : 0;
+            document.getElementById('avg-agreement').textContent = avgAgreement + '%';
+        }
+
+        // 打开标注模态框
+        function openAnnotationModal(annotationId) {
+            const annotation = currentAnnotations.find(a => a.id === annotationId);
+            if (!annotation) return;
+
+            // 设置标注ID到模态框
+            document.getElementById('annotationModal').dataset.annotationId = annotationId;
+
+            const content = document.getElementById('annotation-content');
+            content.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>原始对话</h6>
+                        <div class="border p-3" style="max-height: 300px; overflow-y: auto;">
+                            ${annotation.conversation_history.map(conv => `
+                                <div class="mb-2">
+                                    <strong>孩子:</strong> ${conv.user_message}<br>
+                                    <strong>AI:</strong> ${conv.ai_response}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>评分标准</h6>
+                        <div class="border p-3">
+                            <strong>${annotation.criteria_name}</strong><br>
+                            <small class="text-muted">${annotation.criteria_description}</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <h6>详细标注</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label">专家评分准确性 (1-10)</label>
+                            <input type="range" class="form-range" min="1" max="10" 
+                                   value="${annotation.expert_accuracy || 5}" 
+                                   id="modal-expert-accuracy">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">专家分析质量 (1-10)</label>
+                            <input type="range" class="form-range" min="1" max="10" 
+                                   value="${annotation.expert_quality || 5}" 
+                                   id="modal-expert-quality">
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <label class="form-label">建议的专家评分</label>
+                        <input type="number" class="form-control" min="1" max="10" 
+                               value="${annotation.suggested_score || annotation.expert_score}" 
+                               id="modal-suggested-score">
+                    </div>
+                    
+                    <div class="mt-3">
+                        <label class="form-label">改进建议</label>
+                        <textarea class="form-control" rows="4" 
+                                  placeholder="请提供具体的改进建议，包括prompt优化、评分逻辑调整等..." 
+                                  id="modal-feedback">${annotation.feedback || ''}</textarea>
+                    </div>
+                </div>
+            `;
+
+            const modal = new bootstrap.Modal(document.getElementById('annotationModal'));
+            modal.show();
+        }
+
+        // 保存标注
+        async function saveAnnotation() {
+            try {
+                // 获取当前标注的ID
+                const annotationId = document.getElementById('annotationModal').dataset.annotationId;
+                if (!annotationId) {
+                    alert('无法获取标注ID');
+                    return;
+                }
+
+                // 收集表单数据
+                const annotationData = {
+                    id: annotationId,
+                    expert_accuracy: parseInt(document.getElementById('modal-expert-accuracy').value),
+                    expert_quality: parseInt(document.getElementById('modal-expert-quality').value),
+                    suggested_score: parseInt(document.getElementById('modal-suggested-score').value),
+                    feedback: document.getElementById('modal-feedback').value
+                };
+
+                // 发送到后端
+                const response = await fetch('/api/annotations', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(annotationData)
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    alert('标注保存成功！');
+                    // 更新本地数据
+                    const annotation = currentAnnotations.find(a => a.id === annotationId);
+                    if (annotation) {
+                        annotation.expert_accuracy = annotationData.expert_accuracy;
+                        annotation.expert_quality = annotationData.expert_quality;
+                        annotation.suggested_score = annotationData.suggested_score;
+                        annotation.feedback = annotationData.feedback;
+                        annotation.annotated = true;
+                        annotation.annotated_at = new Date().toISOString();
+                    }
+                    // 重新渲染
+                    renderAnnotations();
+                } else {
+                    alert('保存失败：' + result.message);
+                }
+            } catch (error) {
+                console.error('保存标注失败:', error);
+                alert('保存失败：' + error.message);
+            }
+            
+            bootstrap.Modal.getInstance(document.getElementById('annotationModal')).hide();
+        }
+
+        // 导出标注数据
+        function exportAnnotations() {
+            const dataStr = JSON.stringify(currentAnnotations, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'annotations.json';
+            link.click();
+        }
+
+        // 训练模型
+        async function trainModel() {
+            try {
+                // 检查是否有标注数据
+                const annotatedCount = currentAnnotations.filter(a => a.annotated).length;
+                if (annotatedCount === 0) {
+                    alert('请先完成一些标注再进行训练！');
+                    return;
+                }
+
+                // 显示训练中状态
+                const trainBtn = document.querySelector('button[onclick="trainModel()"]');
+                const originalText = trainBtn.innerHTML;
+                trainBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 训练中...';
+                trainBtn.disabled = true;
+
+                const response = await fetch('/api/train-model', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({annotations: currentAnnotations})
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // 显示训练结果
+                    showTrainingResults(result);
+                } else {
+                    alert('训练失败：' + result.error);
+                }
+            } catch (error) {
+                console.error('训练失败:', error);
+                alert('训练失败：' + error.message);
+            } finally {
+                // 恢复按钮状态
+                const trainBtn = document.querySelector('button[onclick="trainModel()"]');
+                trainBtn.innerHTML = '<i class="fas fa-brain"></i> 训练模型';
+                trainBtn.disabled = false;
+            }
+        }
+
+        // 显示训练结果
+        function showTrainingResults(result) {
+            const modal = document.createElement('div');
+            modal.className = 'modal fade';
+            modal.innerHTML = `
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">训练结果</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="alert alert-success">
+                                <h6><i class="fas fa-check-circle"></i> 训练完成！</h6>
+                                <p>${result.message}</p>
+                            </div>
+                            
+                            ${result.improvements ? `
+                                <h6>改进建议：</h6>
+                                <div class="border p-3">
+                                    <pre style="white-space: pre-wrap; font-size: 0.9em;">${JSON.stringify(result.improvements, null, 2)}</pre>
+                                </div>
+                            ` : ''}
+                            
+                            <div class="mt-3">
+                                <h6>下一步：</h6>
+                                <ul>
+                                    <li>查看改进建议，考虑更新专家评分标准</li>
+                                    <li>继续收集更多标注数据以提高模型准确性</li>
+                                    <li>定期重新训练模型以保持最佳性能</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">确定</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            const bsModal = new bootstrap.Modal(modal);
+            bsModal.show();
+            
+            // 模态框关闭后移除元素
+            modal.addEventListener('hidden.bs.modal', () => {
+                document.body.removeChild(modal);
+            });
+        }
+    </script>
+</body>
+</html>
